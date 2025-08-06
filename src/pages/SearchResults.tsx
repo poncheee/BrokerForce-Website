@@ -1,0 +1,290 @@
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PropertyCard from '@/components/PropertyCard';
+import SwipeCard from '@/components/SwipeCard';
+import SearchBar from '@/components/SearchBar';
+import { sampleProperties, Property } from '@/data/properties';
+import { Home, Filter, Grid, Layers, ArrowLeft } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
+
+export default function SearchResults() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [properties, setProperties] = useState<Property[]>(sampleProperties);
+  const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [viewMode, setViewMode] = useState<'list' | 'swipe'>('list');
+  const [sortBy, setSortBy] = useState('price-low');
+  const [filterType, setFilterType] = useState('all');
+
+  const query = searchParams.get('q') || '';
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // Auto-switch to swipe mode on mobile
+    if (isMobile && viewMode === 'list') {
+      setViewMode('swipe');
+    } else if (!isMobile && viewMode === 'swipe') {
+      setViewMode('list');
+    }
+  }, [isMobile, viewMode]);
+
+  // Filter and sort properties
+  useEffect(() => {
+    let filtered = [...sampleProperties];
+    
+    // Apply type filter
+    if (filterType !== 'all') {
+      filtered = filtered.filter(property => property.type === filterType);
+    }
+    
+    // Apply search filter
+    if (query) {
+      filtered = filtered.filter(property =>
+        property.address.toLowerCase().includes(query.toLowerCase()) ||
+        property.city.toLowerCase().includes(query.toLowerCase()) ||
+        property.state.toLowerCase().includes(query.toLowerCase()) ||
+        property.zipCode.includes(query)
+      );
+    }
+    
+    // Apply sorting
+    switch (sortBy) {
+      case 'price-low':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'beds':
+        filtered.sort((a, b) => b.beds - a.beds);
+        break;
+      case 'sqft':
+        filtered.sort((a, b) => b.sqft - a.sqft);
+        break;
+      default:
+        break;
+    }
+    
+    setProperties(filtered);
+    setCurrentSwipeIndex(0);
+  }, [query, sortBy, filterType]);
+
+  const handleSearch = (newQuery: string) => {
+    setSearchParams({ q: newQuery });
+  };
+
+  const handleSwipeLeft = () => {
+    toast({
+      title: "Property passed",
+      description: "Property removed from your list",
+    });
+    if (currentSwipeIndex < properties.length - 1) {
+      setCurrentSwipeIndex(currentSwipeIndex + 1);
+    } else {
+      toast({
+        title: "No more properties",
+        description: "You've viewed all available properties",
+      });
+    }
+  };
+
+  const handleSwipeRight = () => {
+    toast({
+      title: "Property liked!",
+      description: "Property saved to your favorites",
+    });
+    if (currentSwipeIndex < properties.length - 1) {
+      setCurrentSwipeIndex(currentSwipeIndex + 1);
+    } else {
+      toast({
+        title: "No more properties",
+        description: "You've viewed all available properties",
+      });
+    }
+  };
+
+  const currentProperty = properties[currentSwipeIndex];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="mr-2"
+              >
+                <ArrowLeft size={20} className="mr-2" />
+                Back
+              </Button>
+              <div className="flex items-center">
+                <Home className="h-6 w-6 text-blue-600 mr-2" />
+                <span className="text-xl font-bold text-gray-900">PropertyFinder</span>
+              </div>
+            </div>
+            
+            {!isMobile && (
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  onClick={() => setViewMode('list')}
+                  size="sm"
+                >
+                  <Grid size={16} className="mr-2" />
+                  List
+                </Button>
+                <Button
+                  variant={viewMode === 'swipe' ? 'default' : 'outline'}
+                  onClick={() => setViewMode('swipe')}
+                  size="sm"
+                >
+                  <Layers size={16} className="mr-2" />
+                  Swipe
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Search Bar */}
+        <div className="mb-6">
+          <SearchBar 
+            onSearch={handleSearch}
+            placeholder="Search by address, city, or ZIP code"
+          />
+        </div>
+
+        {/* Results Header with Filters */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {properties.length} homes {query && `in "${query}"`}
+            </h1>
+            <p className="text-gray-600">
+              {viewMode === 'swipe' && isMobile ? 'Swipe to browse properties' : 'Browse available properties'}
+            </p>
+          </div>
+
+          {viewMode === 'list' && (
+            <div className="flex gap-3">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-40">
+                  <Filter size={16} className="mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="house">House</SelectItem>
+                  <SelectItem value="condo">Condo</SelectItem>
+                  <SelectItem value="townhouse">Townhouse</SelectItem>
+                  <SelectItem value="apartment">Apartment</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="beds">Most Bedrooms</SelectItem>
+                  <SelectItem value="sqft">Largest First</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        {/* Results Display */}
+        {properties.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <Home size={64} className="mx-auto" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No properties found
+            </h3>
+            <p className="text-gray-600">
+              Try adjusting your search criteria or browse all available properties.
+            </p>
+          </div>
+        ) : viewMode === 'swipe' ? (
+          /* Swipe Mode */
+          <div className="flex justify-center">
+            <div className="w-full max-w-sm">
+              {currentProperty ? (
+                <div className="relative">
+                  <SwipeCard
+                    property={currentProperty}
+                    onSwipeLeft={handleSwipeLeft}
+                    onSwipeRight={handleSwipeRight}
+                  />
+                  
+                  <div className="mt-4 text-center text-sm text-gray-600">
+                    {currentSwipeIndex + 1} of {properties.length}
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${((currentSwipeIndex + 1) / properties.length) * 100}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    No more properties
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    You've viewed all available properties.
+                  </p>
+                  <Button onClick={() => setCurrentSwipeIndex(0)}>
+                    Start Over
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* List Mode */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {properties.map((property) => (
+              <PropertyCard
+                key={property.id}
+                property={property}
+                onClick={() => {
+                  toast({
+                    title: "Property Details",
+                    description: `Viewing details for ${property.address}`,
+                  });
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
