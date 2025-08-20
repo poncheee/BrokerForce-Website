@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import SearchBar from '@/components/SearchBar';
 import LikeButton from '@/components/LikeButton';
 import CartButton from '@/components/CartButton';
-import { Home, TrendingUp, MapPin, Users } from 'lucide-react';
+import { Home, ArrowRight } from 'lucide-react';
 import { Property } from '@/data/properties';
 import { PropertyService } from '@/services/propertyService';
 
@@ -21,7 +21,7 @@ export default function LandingPage() {
   const [slideWidth, setSlideWidth] = useState(320); // Default for mobile
   const [totalSlides, setTotalSlides] = useState(0);
 
-    const handleSearch = (query: string) => {
+  const handleSearch = (query: string) => {
     // Navigate to search results with just the query
     navigate(`/search?q=${encodeURIComponent(query)}`);
   };
@@ -107,72 +107,71 @@ export default function LandingPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSortDropdownOpen]);
 
-
-
   return (
-    <div className="min-h-screen">
-      {/* Large Banner Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-                         <div className="flex items-center">
-               <Home className="h-10 w-10 text-blue-600 mr-3" />
-               <span className="text-4xl font-bold text-gray-900">brokerforce.ai</span>
-             </div>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link to="/" className="flex items-center">
+              <Home className="h-8 w-8 text-blue-600 mr-2" />
+              <span className="text-2xl font-bold text-gray-900">brokerforce.ai</span>
+            </Link>
             <div className="flex items-center space-x-4">
               <CartButton />
-              <Button variant="ghost" className="text-gray-700 hover:text-blue-600 text-lg font-medium">
+              <Button variant="ghost" className="text-gray-700 hover:text-blue-600">
                 Sign in
               </Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-lg font-medium px-8 py-3">
-                Join
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                Get Started
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Hero Section with Search Bar */}
-      <section
-        className="relative bg-gradient-to-r from-blue-600 to-indigo-700 text-white"
-        style={{
-          backgroundImage: `linear-gradient(rgba(37, 99, 235, 0.9), rgba(67, 56, 202, 0.9)), url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&h=1080&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-12">
-              Find Your Dream Home
-            </h1>
-
-            {/* Prominent Search Bar */}
-            <div className="max-w-5xl mx-auto">
-              <SearchBar
-                onSearch={handleSearch}
-                className="bg-white rounded-xl p-3 shadow-2xl"
-                placeholder="Enter an address, city, or ZIP code"
-                showFilters={false}
-              />
-            </div>
+      {/* Hero Section */}
+      <section className="relative py-20 overflow-hidden">
+        {/* Dynamic background gradient */}
+        <div className="absolute inset-0 gradient-bg opacity-5"></div>
+        <div className="absolute top-20 left-10 w-32 h-32 floating-element rounded-full blur-xl"></div>
+        <div className="absolute bottom-20 right-10 w-40 h-40 floating-element-alt rounded-full blur-xl"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 floating-element-blue rounded-full blur-lg"></div>
+        <div className="absolute top-1/3 right-1/3 w-20 h-20 floating-element rounded-full blur-lg"></div>
+        
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+            Find your dream home
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
+            We make finding your perfect home simple, fast, and enjoyable with AI-powered insights and seamless technology.
+          </p>
+          
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mb-8">
+            <SearchBar
+              onSearch={handleSearch}
+              className="bg-white border border-gray-200 rounded-xl shadow-cluely-lg"
+              placeholder="Enter an address, city, or ZIP code"
+              showFilters={false}
+            />
           </div>
         </div>
       </section>
 
       {/* Featured Homes Section */}
-      <section className="bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-              Featured Homes
+      <section className="py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">
+              Featured homes
             </h2>
 
             {/* Sorting Dropdown */}
             <div className="relative sort-dropdown">
               <button
                 onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-cluely hover:shadow-cluely-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <span className="text-sm text-gray-700">Sorted by:</span>
                 <span className="text-sm font-medium text-gray-900">{currentSort}</span>
@@ -188,7 +187,7 @@ export default function LandingPage() {
 
               {/* Dropdown Menu */}
               {isSortDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-cluely-xl z-10">
                   <div className="py-1">
                     <button
                       onClick={() => handleSortChange('curated')}
@@ -246,19 +245,19 @@ export default function LandingPage() {
             {!isLoadingProperties && !propertiesError && featuredProperties.length > 0 && (
               <>
                 {/* Navigation Arrows */}
-                <button
-                  onClick={handlePrevSlide}
-                  className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
+                                        <button
+                          onClick={handlePrevSlide}
+                          className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white border border-gray-200 rounded-full p-2 shadow-cluely hover:shadow-cluely-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
                   <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
 
-                <button
-                  onClick={handleNextSlide}
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
+                                        <button
+                          onClick={handleNextSlide}
+                          className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white border border-gray-200 rounded-full p-2 shadow-cluely hover:shadow-cluely-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
                   <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -271,48 +270,48 @@ export default function LandingPage() {
                     style={{ transform: `translateX(-${currentSlide * slideWidth}px)` }}
                   >
                     {featuredProperties.map((property) => (
-                                              <div
-                          key={property.id}
-                          className="flex-shrink-0 px-2"
-                          style={{ width: slideWidth }}
-                        >
-                          <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                            <div className="relative">
-                              <img
-                                src={property.image}
-                                alt={property.address}
-                                className="w-full h-48 object-cover"
-                              />
-                              {/* Like Button positioned in top-right corner */}
-                              <div className="absolute top-3 right-3">
-                                <LikeButton property={property} size="md" />
-                              </div>
-                            </div>
-                            <div className="p-4">
-                              {/* Price - Bold and on its own line */}
-                              <div className="text-xl font-bold text-blue-600 mb-2">
-                                ${property.price.toLocaleString()}
-                              </div>
-
-                              {/* Beds, Baths, Sqft - on one line */}
-                              <div className="flex items-center text-sm text-gray-600 mb-2">
-                                <span>{property.beds} beds</span>
-                                <span className="mx-2">•</span>
-                                <span>{property.baths} baths</span>
-                                <span className="mx-2">•</span>
-                                <span>{property.sqft.toLocaleString()} sqft</span>
-                              </div>
-
-                              {/* Address - below the stats */}
-                              <h3 className="font-medium text-gray-900 text-sm line-clamp-1">
-                                {property.address}
-                              </h3>
-                              <p className="text-gray-600 text-xs mt-1">
-                                {property.city}, {property.state} {property.zipCode}
-                              </p>
+                      <div
+                        key={property.id}
+                        className="flex-shrink-0 px-2"
+                        style={{ width: slideWidth }}
+                      >
+                                                      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
+                          <div className="relative">
+                            <img
+                              src={property.image}
+                              alt={property.address}
+                              className="w-full h-48 object-cover"
+                            />
+                            {/* Like Button positioned in top-right corner */}
+                            <div className="absolute top-3 right-3">
+                              <LikeButton property={property} size="md" />
                             </div>
                           </div>
+                          <div className="p-4">
+                            {/* Price - Bold and on its own line */}
+                            <div className="text-xl font-bold text-blue-600 mb-2">
+                              ${property.price.toLocaleString()}
+                            </div>
+
+                            {/* Beds, Baths, Sqft - on one line */}
+                            <div className="flex items-center text-sm text-gray-600 mb-2">
+                              <span>{property.beds} beds</span>
+                              <span className="mx-2">•</span>
+                              <span>{property.baths} baths</span>
+                              <span className="mx-2">•</span>
+                              <span>{property.sqft.toLocaleString()} sqft</span>
+                            </div>
+
+                            {/* Address - below the stats */}
+                            <h3 className="font-medium text-gray-900 text-sm line-clamp-1">
+                              {property.address}
+                            </h3>
+                            <p className="text-gray-600 text-xs mt-1">
+                              {property.city}, {property.state} {property.zipCode}
+                            </p>
+                          </div>
                         </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -348,71 +347,57 @@ export default function LandingPage() {
                 </p>
               </div>
             )}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose BrokerForce?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We make finding your perfect home simple, fast, and enjoyable
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <MapPin className="h-8 w-8 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Local Insights</h3>
-              <p className="text-gray-600">
-                Get detailed neighborhood information, school ratings, and local amenities
-              </p>
+                        </div>
             </div>
+          </section>
 
-            <div className="text-center p-6">
-              <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="h-8 w-8 text-green-600" />
+          {/* Features Section - Cluely style */}
+          <section className="relative py-20 bg-gray-50 overflow-hidden">
+            {/* Background floating elements */}
+            <div className="absolute top-10 right-20 w-20 h-20 floating-element rounded-full blur-lg"></div>
+            <div className="absolute bottom-10 left-20 w-16 h-16 floating-element-alt rounded-full blur-lg"></div>
+            
+            <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                <div className="bg-white p-8 rounded-xl shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 tracking-tight">AI-powered insights</h2>
+                  <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                    Our advanced AI analyzes market trends, property values, and neighborhood data to help you make informed decisions about your next home.
+                  </p>
+                </div>
+                <div className="bg-white p-8 rounded-xl shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6 tracking-tight">Seamless experience</h2>
+                  <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                    From search to closing, we streamline every step of the home buying process with intuitive tools and expert support.
+                  </p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Market Trends</h3>
-              <p className="text-gray-600">
-                Stay updated with real-time market data and price trends
-              </p>
             </div>
+          </section>
 
-            <div className="text-center p-6">
-              <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Expert Support</h3>
-              <p className="text-gray-600">
-                Connect with local real estate experts who know the market
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-blue-600 text-white py-16">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Find Your Dream Home?
+          {/* CTA Section */}
+      <section className="relative py-20 bg-gray-50 overflow-hidden">
+        {/* Background floating elements */}
+        <div className="absolute top-10 left-10 w-24 h-24 floating-element rounded-full blur-lg"></div>
+        <div className="absolute bottom-10 right-10 w-20 h-20 floating-element-alt rounded-full blur-lg"></div>
+        <div className="absolute top-1/2 left-1/3 w-16 h-16 floating-element-blue rounded-full blur-md"></div>
+        
+        <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4 tracking-tight">
+            Ready to find your dream home?
           </h2>
-          <p className="text-xl mb-8 text-blue-100">
-            Join millions of users who trust BrokerForce to help them find the perfect place
+          <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            Join us in building the future of real estate
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="outline" className="text-blue-600 bg-white hover:bg-gray-100">
-              Browse Homes
-            </Button>
-            <Button size="lg" className="bg-green-600 hover:bg-green-700">
-              Get Started Free
+            <Link to="/">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 shadow-cluely-lg hover:shadow-cluely-xl transition-all duration-200">
+                Browse Homes
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
+            <Button size="lg" variant="outline" className="shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
+              Get Started
             </Button>
           </div>
         </div>
@@ -420,15 +405,15 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <Home className="h-8 w-8 text-blue-400 mr-2" />
-                <span className="text-xl font-bold">BrokerForce</span>
+                <Home className="h-6 w-6 text-blue-400 mr-2" />
+                <span className="text-lg font-bold">BrokerForce</span>
               </div>
               <p className="text-gray-400">
-                Making home buying and selling simple and transparent.
+                Building the future of real estate.
               </p>
             </div>
 
@@ -453,15 +438,21 @@ export default function LandingPage() {
             <div>
               <h3 className="text-lg font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white">About</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
-                <li><a href="#" className="hover:text-white">Careers</a></li>
+                <li><Link to="/about" className="hover:text-white">About</Link></li>
+                <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
+                <li><Link to="/help" className="hover:text-white">Help/FAQ</Link></li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 BrokerForce. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center text-gray-400">
+              <p>&copy; 2024 BrokerForce. All rights reserved.</p>
+              <div className="flex space-x-6 mt-4 md:mt-0">
+                <Link to="/terms" className="hover:text-white">Terms of Service</Link>
+                <Link to="/privacy" className="hover:text-white">Privacy Policy</Link>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
