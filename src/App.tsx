@@ -6,6 +6,9 @@ import Index from "@/pages/Index";
 import SearchResults from "@/pages/SearchResults";
 import Favorites from "@/pages/Favorites";
 import PropertyDetail from "@/pages/PropertyDetail";
+import RepresentationForm from "@/pages/RepresentationForm";
+import PaymentPage from "@/pages/PaymentPage";
+import PaymentConfirmation from "@/pages/PaymentConfirmation";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Help from "@/pages/Help";
@@ -42,6 +45,15 @@ function App() {
               <Route path="/search" element={<SearchResults />} />
               <Route path="/favorites" element={<Favorites />} />
               <Route path="/property/:id" element={<PropertyDetail />} />
+              <Route
+                path="/property/:id/representation"
+                element={<RepresentationForm />}
+              />
+              <Route path="/property/:id/payment" element={<PaymentPage />} />
+              <Route
+                path="/property/:id/confirmation"
+                element={<PaymentConfirmation />}
+              />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/help" element={<Help />} />

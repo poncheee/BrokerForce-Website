@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Property } from "@/data/properties";
 import { PropertyService } from "@/services/propertyService";
+import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowLeft,
   Heart,
@@ -27,6 +28,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
+  LogIn,
+  User,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import LikeButton from "@/components/LikeButton";
@@ -34,6 +37,7 @@ import LikeButton from "@/components/LikeButton";
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isAuthenticated, login, isLoading: authLoading } = useAuth();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,16 +133,23 @@ export default function PropertyDetail() {
   };
 
   const handleBuyNow = () => {
-    if (property) {
+    if (!property) return;
+
+    if (!isAuthenticated) {
+      // Show login prompt for unauthenticated users
       toast({
-        title: "Contact Agent",
-        description:
-          "You will be contacted by our agent within 24 hours to discuss this property.",
+        title: "Sign In Required",
+        description: "Please sign in to proceed with purchasing this property.",
+        variant: "destructive",
       });
 
-      // In a real app, this would redirect to a contact form or initiate a call
-      console.log("Buy Now clicked for property:", property.id);
+      // Show login dialog or redirect to login
+      login();
+      return;
     }
+
+    // User is authenticated, proceed to representation form
+    navigate(`/property/${property.id}/representation`);
   };
 
   const handleContactFormChange = (field: string, value: string) => {
@@ -436,13 +447,40 @@ export default function PropertyDetail() {
             {/* Buy Now Button */}
             <Card>
               <CardContent className="p-6">
-                <Button
-                  onClick={handleBuyNow}
-                  className="w-full bg-green-600 hover:bg-green-700 text-lg font-semibold py-3"
-                  size="lg"
-                >
-                  Buy Now
-                </Button>
+                {authLoading ? (
+                  <Button
+                    disabled
+                    className="w-full bg-gray-400 text-lg font-semibold py-3"
+                    size="lg"
+                  >
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Loading...
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleBuyNow}
+                    className="w-full bg-green-600 hover:bg-green-700 text-lg font-semibold py-3"
+                    size="lg"
+                  >
+                    {isAuthenticated ? (
+                      <>
+                        <User size={20} className="mr-2" />
+                        Buy Now
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={20} className="mr-2" />
+                        Sign In to Buy
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {isAuthenticated && user && (
+                  <p className="text-sm text-gray-600 mt-2 text-center">
+                    Signed in as {user.name}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
