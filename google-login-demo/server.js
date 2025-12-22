@@ -27,12 +27,35 @@ initializeSchema().catch((err) => {
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-  })
-);
+// CORS configuration - allow requests from frontend
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      "http://localhost:5173",
+      // Allow requests with no origin (like mobile apps or curl requests)
+      undefined,
+    ].filter(Boolean);
+
+    // In production, strictly check origin
+    if (process.env.NODE_ENV === "production") {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS: Blocked origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    } else {
+      // In development, allow all origins
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -160,8 +183,11 @@ app.use((req, res) => {
 });
 
 // Start server and initialize database
-app.listen(PORT, async () => {
-  console.log(`🚀 BrokerForce Auth Server running on port ${PORT}`);
+// Railway requires binding to 0.0.0.0 to accept external connections
+const HOST = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
+
+app.listen(PORT, HOST, async () => {
+  console.log(`🚀 BrokerForce Auth Server running on ${HOST}:${PORT}`);
   console.log(
     `📱 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:5173"}`
   );
@@ -173,6 +199,7 @@ app.listen(PORT, async () => {
 
   try {
     await initializeSchema(); // Initialize database schema on startup
+    console.log("✅ Database schema initialized successfully!");
   } catch (error) {
     console.error("❌ Failed to initialize database schema on startup:", error);
     // Do not exit, allow server to start even if schema init fails (e.g., already exists)

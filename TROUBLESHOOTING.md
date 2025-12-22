@@ -2,6 +2,95 @@
 
 Common issues and solutions for BrokerForce deployment and development.
 
+## 🔴 Backend Returns 404 - Health Check and API Endpoints Not Found
+
+### Symptoms
+
+- `Failed to load resource: the server responded with a status of 404`
+- Both `/health` and `/api/me` endpoints return 404
+- Sign in button doesn't work
+- Backend appears to be unreachable
+
+### Causes & Solutions
+
+#### 1. Backend Not Deployed on Railway
+
+**Problem**: The backend service hasn't been deployed to Railway yet.
+
+**Solution**:
+
+1. Go to [Railway.app](https://railway.app/) and sign in
+2. Check if you have a project with a backend service
+3. If not, create a new project:
+   - Click **"New Project"**
+   - Select **"Deploy from GitHub repo"**
+   - Select your BrokerForce repository
+   - Railway should detect the `google-login-demo` folder
+   - If not, go to **Settings** → **Service** → Set **Root Directory** to `google-login-demo`
+4. Wait for deployment to complete
+5. Check the **Deployments** tab for deployment status
+
+#### 2. Backend Service Not Running
+
+**Problem**: The backend is deployed but the service crashed or isn't running.
+
+**How to Check**:
+
+1. Go to Railway dashboard → Your backend service
+2. Click on **"Deployments"** tab
+3. Check the latest deployment status (should be "Active")
+4. Click on the deployment to see logs
+5. Look for errors in the logs
+
+**Common Issues**:
+
+- Missing environment variables → Check **Variables** tab
+- Database connection errors → Verify `DATABASE_URL` is set correctly
+- Port binding errors → Should see "🚀 BrokerForce Auth Server running on 0.0.0.0:PORT" in logs
+
+**Solution**: Fix the errors shown in logs and redeploy.
+
+#### 3. Incorrect Railway URL
+
+**Problem**: You're using the wrong URL to access the backend.
+
+**How to Find Your Railway Backend URL**:
+
+1. Go to Railway dashboard → Your backend service
+2. Go to **Settings** tab
+3. Scroll down to **"Networking"** section
+4. Copy the **"Public Domain"** URL (e.g., `https://brokerforce-auth-production.up.railway.app`)
+5. This is your backend URL - use it for `BASE_URL` and `VITE_AUTH_SERVER_URL`
+
+**Solution**:
+
+- Update `BASE_URL` in Railway Variables to match your actual Railway URL
+- Update `VITE_AUTH_SERVER_URL` in Netlify to match your actual Railway URL
+- Ensure both URLs include `https://`
+
+#### 4. Root Directory Not Set Correctly
+
+**Problem**: Railway is trying to deploy from the wrong directory.
+
+**Solution**:
+
+1. Go to Railway dashboard → Your backend service
+2. Go to **Settings** → **Service**
+3. Set **Root Directory** to `google-login-demo`
+4. Save and redeploy
+
+#### 5. Procfile Not Found
+
+**Problem**: Railway can't find how to start the server.
+
+**Solution**: Ensure `google-login-demo/Procfile` exists with:
+
+```
+web: node server.js
+```
+
+---
+
 ## 🔴 Auth Check Failed: "Unexpected token '<', "<!DOCTYPE "... is not valid JSON"
 
 ### Symptoms
@@ -58,16 +147,37 @@ Common issues and solutions for BrokerForce deployment and development.
 
 **Problem**: Backend is rejecting requests from frontend due to CORS.
 
+**Symptoms**:
+- `Access to fetch ... has been blocked by CORS policy`
+- `No 'Access-Control-Allow-Origin' header is present on the requested resource`
+- `Response to preflight request doesn't pass access control check`
+
 **Solution**:
 
-1. Check Railway backend logs for CORS errors
-2. Verify `FRONTEND_URL` in Railway matches your Netlify site URL exactly:
-   ```
-   ✅ Correct: https://your-site.netlify.app
-   ❌ Wrong: http://your-site.netlify.app (missing https)
-   ❌ Wrong: https://your-site.netlify.app/ (trailing slash)
-   ```
-3. Redeploy backend after fixing
+1. **Verify `FRONTEND_URL` in Railway** matches your frontend URL exactly:
+   - Go to Railway dashboard → Your backend service → Variables tab
+   - Check `FRONTEND_URL` value
+   - It should match your frontend deployment URL exactly:
+     ```
+     ✅ Correct: https://brokerforce-website-production.up.railway.app
+     ✅ Correct: https://your-site.netlify.app
+     ❌ Wrong: http://your-site.netlify.app (missing https)
+     ❌ Wrong: https://your-site.netlify.app/ (trailing slash)
+     ❌ Wrong: brokerforce-websiteproduction.up.railway.app (missing hyphen or https)
+     ```
+
+2. **Check for URL typos**: Ensure there are no typos in the URL (e.g., missing hyphens, wrong subdomain)
+
+3. **Redeploy backend** after fixing `FRONTEND_URL`
+
+4. **Check Railway backend logs** for CORS warnings:
+   - Look for: `CORS: Blocked origin: ...`
+   - This will show which origin was blocked and why
+
+5. **Verify both URLs are correct**:
+   - Frontend URL (where your React app is deployed) → Set in Railway as `FRONTEND_URL`
+   - Backend URL (Railway public domain) → Set in Netlify as `VITE_AUTH_SERVER_URL`
+   - They should be different URLs if deployed separately
 
 #### 5. Backend Not Running
 
@@ -206,14 +316,35 @@ Common issues and solutions for BrokerForce deployment and development.
 
 When troubleshooting, verify:
 
-- [ ] `BASE_URL` in Railway includes `https://` and matches actual Railway URL
-- [ ] `VITE_AUTH_SERVER_URL` in Netlify matches Railway backend URL exactly
+### Railway Backend:
+
+- [ ] Backend service is deployed and running (check Railway dashboard)
+- [ ] Root Directory is set to `google-login-demo` in Railway settings
+- [ ] Latest deployment is "Active" (not failed)
+- [ ] Backend logs show "🚀 BrokerForce Auth Server running on 0.0.0.0:PORT"
+- [ ] `BASE_URL` in Railway includes `https://` and matches actual Railway Public Domain URL
 - [ ] `FRONTEND_URL` in Railway matches Netlify site URL exactly (no trailing slash)
 - [ ] `DATABASE_URL` in Railway uses Supabase Connection Pooling URI with correct password
+- [ ] `NODE_ENV=production` is set in Railway
+- [ ] All required environment variables are set (see DEPLOYMENT_GUIDE.md)
+
+### Netlify Frontend:
+
+- [ ] Frontend is deployed successfully
+- [ ] `VITE_AUTH_SERVER_URL` in Netlify matches Railway backend URL exactly (with `https://`)
+- [ ] Frontend was redeployed after setting environment variables
+
+### Google OAuth:
+
 - [ ] Google OAuth callback URL is configured in Google Cloud Console
-- [ ] Backend is running (check `/health` endpoint)
-- [ ] All environment variables are set in both Railway and Netlify
-- [ ] Both services have been redeployed after environment variable changes
+- [ ] Authorized redirect URI: `https://your-backend.railway.app/auth/google/callback`
+- [ ] Authorized JavaScript origins include both frontend and backend URLs
+
+### Testing:
+
+- [ ] Backend health check works: Visit `https://your-backend.railway.app/health` (should return JSON)
+- [ ] Backend API works: Visit `https://your-backend.railway.app/api/me` (should return JSON, not HTML)
+- [ ] Sign in button works after all above checks pass
 
 ---
 
