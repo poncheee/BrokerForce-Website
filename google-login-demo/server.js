@@ -32,38 +32,55 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Get allowed origins from environment
     const frontendUrl = process.env.FRONTEND_URL;
+
+    // Normalize URLs (remove trailing slashes, convert to lowercase for comparison)
+    const normalizeUrl = (url) => {
+      if (!url) return null;
+      return url.replace(/\/+$/, "").toLowerCase();
+    };
+
     const allowedOrigins = [
       frontendUrl,
       "http://localhost:5173",
       "http://localhost:3000",
-    ].filter(Boolean); // Remove undefined values
+      "https://rebrokerforceai.netlify.app", // Explicitly allow Netlify frontend
+    ]
+      .filter(Boolean) // Remove undefined values
+      .map(normalizeUrl); // Normalize all URLs
+
+    const normalizedOrigin = normalizeUrl(origin);
 
     // Log for debugging
     console.log(
-      `CORS check - Origin: ${origin}, Allowed: ${allowedOrigins.join(", ")}`
+      `CORS check - Origin: ${origin} (normalized: ${normalizedOrigin}), Allowed: ${allowedOrigins.join(
+        ", "
+      )}, FRONTEND_URL: ${frontendUrl}`
     );
 
     // In production, check against allowed origins
     if (process.env.NODE_ENV === "production") {
       // Allow requests with no origin (same-origin, mobile apps, curl, etc.)
       if (!origin) {
+        console.log("CORS: Allowing request with no origin");
         return callback(null, true);
       }
 
-      // Check if origin is in allowed list
-      if (allowedOrigins.some((allowed) => origin === allowed)) {
+      // Check if origin is in allowed list (normalized comparison)
+      if (allowedOrigins.some((allowed) => normalizedOrigin === allowed)) {
+        console.log(`CORS: Allowing origin: ${origin}`);
         return callback(null, true);
       }
 
       // Origin not allowed
       console.warn(
-        `CORS: Blocked origin: ${origin} (allowed: ${allowedOrigins.join(
+        `CORS: Blocked origin: ${origin} (normalized: ${normalizedOrigin}, allowed: ${allowedOrigins.join(
           ", "
         )})`
       );
       return callback(new Error(`Origin ${origin} not allowed by CORS`));
     } else {
       // In development, allow all origins
+      console.log("CORS: Development mode - allowing all origins");
       callback(null, true);
     }
   },
