@@ -30,29 +30,48 @@ const PORT = process.env.PORT || 3001;
 // CORS configuration - allow requests from frontend
 const corsOptions = {
   origin: function (origin, callback) {
+    // Get allowed origins from environment
+    const frontendUrl = process.env.FRONTEND_URL;
     const allowedOrigins = [
-      process.env.FRONTEND_URL,
+      frontendUrl,
       "http://localhost:5173",
-      // Allow requests with no origin (like mobile apps or curl requests)
-      undefined,
-    ].filter(Boolean);
+      "http://localhost:3000",
+    ].filter(Boolean); // Remove undefined values
 
-    // In production, strictly check origin
+    // Log for debugging
+    console.log(
+      `CORS check - Origin: ${origin}, Allowed: ${allowedOrigins.join(", ")}`
+    );
+
+    // In production, check against allowed origins
     if (process.env.NODE_ENV === "production") {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`CORS: Blocked origin: ${origin}`);
-        callback(new Error("Not allowed by CORS"));
+      // Allow requests with no origin (same-origin, mobile apps, curl, etc.)
+      if (!origin) {
+        return callback(null, true);
       }
+
+      // Check if origin is in allowed list
+      if (allowedOrigins.some((allowed) => origin === allowed)) {
+        return callback(null, true);
+      }
+
+      // Origin not allowed
+      console.warn(
+        `CORS: Blocked origin: ${origin} (allowed: ${allowedOrigins.join(
+          ", "
+        )})`
+      );
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
     } else {
       // In development, allow all origins
       callback(null, true);
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Content-Type"],
+  optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
 app.use(cors(corsOptions));

@@ -148,6 +148,7 @@ web: node server.js
 **Problem**: Backend is rejecting requests from frontend due to CORS.
 
 **Symptoms**:
+
 - `Access to fetch ... has been blocked by CORS policy`
 - `No 'Access-Control-Allow-Origin' header is present on the requested resource`
 - `Response to preflight request doesn't pass access control check`
@@ -155,6 +156,7 @@ web: node server.js
 **Solution**:
 
 1. **Verify `FRONTEND_URL` in Railway** matches your frontend URL exactly:
+
    - Go to Railway dashboard → Your backend service → Variables tab
    - Check `FRONTEND_URL` value
    - It should match your frontend deployment URL exactly:
@@ -171,6 +173,7 @@ web: node server.js
 3. **Redeploy backend** after fixing `FRONTEND_URL`
 
 4. **Check Railway backend logs** for CORS warnings:
+
    - Look for: `CORS: Blocked origin: ...`
    - This will show which origin was blocked and why
 
