@@ -5,10 +5,18 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "@/pages/Index";
 import SearchResults from "@/pages/SearchResults";
 import Favorites from "@/pages/Favorites";
+import Dashboard from "@/pages/Dashboard";
+import DashboardOffers from "@/pages/DashboardOffers";
+import OfferDetail from "@/pages/OfferDetail";
+import DashboardDocuments from "@/pages/DashboardDocuments";
+import DashboardPayments from "@/pages/DashboardPayments";
 import PropertyDetail from "@/pages/PropertyDetail";
 import RepresentationForm from "@/pages/RepresentationForm";
 import PaymentPage from "@/pages/PaymentPage";
 import PaymentConfirmation from "@/pages/PaymentConfirmation";
+import FinancingSelection from "@/pages/FinancingSelection";
+import OfferAgreementForm from "@/pages/OfferAgreementForm";
+import OfferConfirmation from "@/pages/OfferConfirmation";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Help from "@/pages/Help";
@@ -44,6 +52,17 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/search" element={<SearchResults />} />
               <Route path="/favorites" element={<Favorites />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/offers" element={<DashboardOffers />} />
+              <Route path="/dashboard/offers/:id" element={<OfferDetail />} />
+              <Route
+                path="/dashboard/documents"
+                element={<DashboardDocuments />}
+              />
+              <Route
+                path="/dashboard/payments"
+                element={<DashboardPayments />}
+              />
               <Route path="/property/:id" element={<PropertyDetail />} />
               <Route
                 path="/property/:id/representation"
@@ -53,6 +72,18 @@ function App() {
               <Route
                 path="/property/:id/confirmation"
                 element={<PaymentConfirmation />}
+              />
+              <Route
+                path="/property/:id/financing"
+                element={<FinancingSelection />}
+              />
+              <Route
+                path="/property/:id/offer"
+                element={<OfferAgreementForm />}
+              />
+              <Route
+                path="/property/:id/offer/confirmation"
+                element={<OfferConfirmation />}
               />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />

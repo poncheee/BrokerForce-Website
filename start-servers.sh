@@ -41,7 +41,7 @@ sleep 3
 
 # Start the React frontend
 echo "⚛️  Starting React Frontend..."
-npm run dev &
+pnpm dev &
 FRONTEND_PID=$!
 
 echo ""

@@ -2,11 +2,15 @@ const express = require("express");
 const passport = require("passport");
 const session = require("express-session");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const path = require("path");
 require("dotenv").config();
 
 // Import passport configuration
 require("./config/passport");
+
+// Initialize database connection
+const { query } = require("./db");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -21,6 +25,7 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Session configuration
 app.use(
@@ -33,6 +38,9 @@ app.use(
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      // In production, use "none" with secure: true for cross-origin
+      // In development, use "lax" for localhost (browsers allow this for localhost)
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     },
   })
 );
@@ -44,6 +52,12 @@ app.use(passport.session());
 // Routes
 app.use("/auth", require("./routes/auth"));
 app.use("/api", require("./routes/api"));
+app.use("/api/favorites", require("./routes/favorites"));
+app.use("/api/purchases", require("./routes/purchases"));
+app.use("/api/offers", require("./routes/offers"));
+app.use("/api/documents", require("./routes/documents"));
+app.use("/api/payments", require("./routes/payments"));
+app.use("/api/dashboard", require("./routes/dashboard"));
 
 // Health check endpoint
 app.get("/health", (req, res) => {

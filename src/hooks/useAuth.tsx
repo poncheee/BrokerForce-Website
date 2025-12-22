@@ -1,6 +1,12 @@
 // src/hooks/useAuth.tsx
-import { useState, useEffect, createContext, useContext } from 'react';
-import { authService, User, AuthResponse } from '@/services/authService';
+import {
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+} from "react";
+import { authService, User, AuthResponse } from "@/services/authService";
 
 interface AuthContextType {
   user: User | null;
@@ -19,26 +25,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response: AuthResponse = await authService.checkAuth();
-      
+
       if (response.user) {
         setUser(response.user);
       } else {
         setUser(null);
       }
     } catch (err) {
-      console.error('Authentication check failed:', err);
-      setError('Failed to check authentication status');
+      console.error("Authentication check failed:", err);
+      setError("Failed to check authentication status");
       setUser(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const login = () => {
     authService.initiateGoogleLogin();
@@ -54,29 +60,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setError(result.message);
       }
     } catch (err) {
-      console.error('Logout failed:', err);
-      setError('Logout failed');
+      console.error("Logout failed:", err);
+      setError("Logout failed");
     }
   };
 
   // Check authentication on mount and when URL changes
   useEffect(() => {
-    checkAuth();
-
-    // Check for auth success in URL params
+    // Check for auth success in URL params first
     const urlParams = new URLSearchParams(window.location.search);
-    const authStatus = urlParams.get('auth');
-    
-    if (authStatus === 'success') {
+    const authStatus = urlParams.get("auth");
+
+    if (authStatus === "success") {
       // Remove the auth parameter from URL
       const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('auth');
-      window.history.replaceState({}, '', newUrl.toString());
-      
-      // Re-check authentication
-      setTimeout(checkAuth, 1000);
+      newUrl.searchParams.delete("auth");
+      window.history.replaceState({}, "", newUrl.toString());
+
+      // Immediately check authentication after OAuth redirect
+      checkAuth();
+    } else {
+      // Normal auth check on mount
+      checkAuth();
     }
-  }, []);
+  }, [checkAuth]);
 
   const value: AuthContextType = {
     user,
@@ -88,17 +95,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

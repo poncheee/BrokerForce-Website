@@ -1,7 +1,7 @@
 // src/components/SignInButton.tsx
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +9,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/useAuth';
-import { LogOut, User, Loader2 } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
+import { LogOut, User, Loader2 } from "lucide-react";
 
 export default function SignInButton() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
@@ -28,9 +28,9 @@ export default function SignInButton() {
 
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -68,18 +68,20 @@ export default function SignInButton() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => (window.location.href = "/dashboard")}
+          >
             <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+            <span>Dashboard</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={handleLogout}
             disabled={isLoggingOut}
             className="text-red-600 focus:text-red-600"
           >
             <LogOut className="mr-2 h-4 w-4" />
-            <span>{isLoggingOut ? 'Signing out...' : 'Sign out'}</span>
+            <span>{isLoggingOut ? "Signing out..." : "Sign out"}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -87,8 +89,8 @@ export default function SignInButton() {
   }
 
   return (
-    <Button 
-      variant="ghost" 
+    <Button
+      variant="ghost"
       onClick={login}
       className="text-gray-700 hover:text-blue-600"
     >

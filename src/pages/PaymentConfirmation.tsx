@@ -331,10 +331,11 @@ export default function PaymentConfirmation() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">
-                    Agent Assignment
+                    Select Financing Option
                   </h4>
                   <p className="text-gray-600">
-                    Your dedicated buyer's agent will be assigned within 2 hours
+                    Choose how you'd like to finance this purchase (cash, loan,
+                    or apply for loan)
                   </p>
                 </div>
               </div>
@@ -345,11 +346,11 @@ export default function PaymentConfirmation() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">
-                    Initial Contact
+                    Submit Your Offer
                   </h4>
                   <p className="text-gray-600">
-                    Your agent will contact you within 24 hours to discuss your
-                    needs
+                    Complete the offer agreement form with your offer amount and
+                    terms
                   </p>
                 </div>
               </div>
@@ -359,12 +360,10 @@ export default function PaymentConfirmation() {
                   <span className="text-blue-600 font-semibold text-sm">3</span>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">
-                    Service Delivery
-                  </h4>
+                  <h4 className="font-semibold text-gray-900">Agent Review</h4>
                   <p className="text-gray-600">
-                    Your selected services will be scheduled and delivered as
-                    agreed
+                    Your agent will review your offer and contact you with next
+                    steps
                   </p>
                 </div>
               </div>
@@ -372,8 +371,23 @@ export default function PaymentConfirmation() {
           </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-8">
+        {/* Primary Action Button - Prominent */}
+        <div className="mt-8">
+          <Button
+            onClick={() => navigate(`/property/${property.id}/financing`)}
+            className="w-full bg-green-600 hover:bg-green-700 text-lg font-semibold py-6"
+            size="lg"
+          >
+            Continue to Financing Selection
+            <ArrowRight className="h-5 w-5 ml-2" />
+          </Button>
+          <p className="text-sm text-gray-600 text-center mt-2">
+            Select your financing option and submit an offer
+          </p>
+        </div>
+
+        {/* Secondary Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
           <Button
             onClick={handleDownloadReceipt}
             variant="outline"
@@ -386,7 +400,8 @@ export default function PaymentConfirmation() {
 
           <Button
             onClick={handleContactAgent}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            variant="outline"
+            className="flex-1"
             size="lg"
           >
             <Mail size={20} className="mr-2" />
@@ -395,11 +410,12 @@ export default function PaymentConfirmation() {
 
           <Button
             onClick={() => navigate(`/property/${property.id}`)}
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            variant="outline"
+            className="flex-1"
             size="lg"
           >
-            <ArrowRight size={20} className="mr-2" />
-            View Property
+            <ArrowRight size={20} className="mr-2 rotate-180" />
+            Back to Property
           </Button>
         </div>
 

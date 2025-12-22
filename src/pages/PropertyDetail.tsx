@@ -444,9 +444,9 @@ export default function PropertyDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Buy Now Button */}
+            {/* Action Buttons */}
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-6 space-y-3">
                 {authLoading ? (
                   <Button
                     disabled
@@ -457,23 +457,55 @@ export default function PropertyDetail() {
                     Loading...
                   </Button>
                 ) : (
-                  <Button
-                    onClick={handleBuyNow}
-                    className="w-full bg-green-600 hover:bg-green-700 text-lg font-semibold py-3"
-                    size="lg"
-                  >
-                    {isAuthenticated ? (
-                      <>
-                        <User size={20} className="mr-2" />
-                        Buy Now
-                      </>
-                    ) : (
-                      <>
-                        <LogIn size={20} className="mr-2" />
-                        Sign In to Buy
-                      </>
-                    )}
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleBuyNow}
+                      className="w-full bg-green-600 hover:bg-green-700 text-lg font-semibold py-3"
+                      size="lg"
+                    >
+                      {isAuthenticated ? (
+                        <>
+                          <User size={20} className="mr-2" />
+                          Buy Now
+                        </>
+                      ) : (
+                        <>
+                          <LogIn size={20} className="mr-2" />
+                          Sign In to Buy
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        toast({
+                          title: "Sell Now",
+                          description:
+                            "Sell functionality coming soon. Contact us to list your property.",
+                        });
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-lg font-semibold py-3"
+                      size="lg"
+                      variant="default"
+                    >
+                      <Home size={20} className="mr-2" />
+                      Sell Now
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        toast({
+                          title: "Swap Now",
+                          description:
+                            "Property swap functionality coming soon.",
+                        });
+                      }}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-lg font-semibold py-3"
+                      size="lg"
+                      variant="default"
+                    >
+                      <Home size={20} className="mr-2" />
+                      Swap Now
+                    </Button>
+                  </>
                 )}
 
                 {isAuthenticated && user && (

@@ -1,10 +1,19 @@
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Property } from '@/data/properties';
-import { Bed, Bath, Square, Heart, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import LikeButton from '@/components/LikeButton';
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Property } from "@/data/properties";
+import {
+  Bed,
+  Bath,
+  Square,
+  Heart,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import LikeButton from "@/components/LikeButton";
+import { favoritesService } from "@/services/favoritesService";
 
 interface SwipeCardProps {
   property: Property;
@@ -12,19 +21,23 @@ interface SwipeCardProps {
   onSwipeRight: () => void;
 }
 
-export default function SwipeCard({ property, onSwipeLeft, onSwipeRight }: SwipeCardProps) {
+export default function SwipeCard({
+  property,
+  onSwipeLeft,
+  onSwipeRight,
+}: SwipeCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       maximumFractionDigits: 0,
     }).format(price);
   };
 
   const formatSqft = (sqft: number) => {
-    return new Intl.NumberFormat('en-US').format(sqft);
+    return new Intl.NumberFormat("en-US").format(sqft);
   };
 
   const nextImage = () => {
@@ -74,7 +87,7 @@ export default function SwipeCard({ property, onSwipeLeft, onSwipeRight }: Swipe
                 <div
                   key={index}
                   className={`w-2 h-2 rounded-full ${
-                    index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                    index === currentImageIndex ? "bg-white" : "bg-white/50"
                   }`}
                 />
               ))}
@@ -96,9 +109,7 @@ export default function SwipeCard({ property, onSwipeLeft, onSwipeRight }: Swipe
           <div className="text-2xl font-bold text-green-600 mb-1">
             {formatPrice(property.price)}
           </div>
-          <div className="text-gray-800 font-medium">
-            {property.address}
-          </div>
+          <div className="text-gray-800 font-medium">{property.address}</div>
           <div className="text-gray-600 text-sm">
             {property.city}, {property.state} {property.zipCode}
           </div>
@@ -137,15 +148,13 @@ export default function SwipeCard({ property, onSwipeLeft, onSwipeRight }: Swipe
           <Button
             size="lg"
             className="flex-1 bg-green-600 hover:bg-green-700"
-            onClick={() => {
-              // Add to favorites and then swipe right
-              const likedHouses = JSON.parse(localStorage.getItem('likedHouses') || '[]');
-              const isAlreadyLiked = likedHouses.some((house: Property) => house.id === property.id);
-              if (!isAlreadyLiked) {
-                const updatedLikedHouses = [...likedHouses, property];
-                localStorage.setItem('likedHouses', JSON.stringify(updatedLikedHouses));
-                // Dispatch custom event to update cart count
-                window.dispatchEvent(new CustomEvent('likedHousesChanged'));
+            onClick={async () => {
+              // Add to favorites via API and then swipe right
+              try {
+                await favoritesService.addFavorite(property.id, property);
+                window.dispatchEvent(new CustomEvent("likedHousesChanged"));
+              } catch (error) {
+                console.error("Error adding favorite:", error);
               }
               onSwipeRight();
             }}

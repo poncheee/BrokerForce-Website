@@ -1,11 +1,12 @@
 // src/services/purchaseService.ts
 
 import { Property } from "@/data/properties";
+import { authService } from "./authService";
 
 export interface PurchaseRequest {
   id: string;
-  propertyId: string;
-  userId: string;
+  property_id: string;
+  user_id: string;
   status:
     | "pending"
     | "representation_signed"
@@ -13,12 +14,22 @@ export interface PurchaseRequest {
     | "agent_assigned"
     | "completed"
     | "cancelled";
+  representation_data?: RepresentationData;
+  payment_data?: PaymentData;
+  selected_services?: string[];
+  total_amount?: number;
+  offer_data?: any;
+  created_at: string;
+  updated_at: string;
+  // Frontend convenience fields (converted from snake_case)
+  propertyId?: string;
+  userId?: string;
   representationData?: RepresentationData;
   paymentData?: PaymentData;
   selectedServices?: string[];
   totalAmount?: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface RepresentationData {
@@ -62,9 +73,9 @@ export interface ServiceOption {
 }
 
 export class PurchaseService {
-  private static baseUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:3001";
-  private static storageKey = "brokerforce_purchases";
+  private static getBaseUrl(): string {
+    return import.meta.env.VITE_AUTH_SERVER_URL || "http://localhost:3001";
+  }
 
   // Service options with pricing
   static readonly SERVICE_OPTIONS: ServiceOption[] = [
@@ -103,28 +114,63 @@ export class PurchaseService {
 
   static readonly FIXED_REPRESENTATION_FEE = 299;
 
+  private static async fetchWithAuth(url: string, options?: RequestInit) {
+    const headers = {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    };
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      credentials: "include", // Important for session cookies
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || errorData.message || `API error: ${response.status}`
+      );
+    }
+
+    return response.json();
+  }
+
+  private static normalizePurchaseRequest(purchase: any): PurchaseRequest {
+    // Convert snake_case from DB to camelCase for frontend, while keeping both
+    return {
+      ...purchase,
+      propertyId: purchase.property_id,
+      userId: purchase.user_id,
+      representationData: purchase.representation_data
+        ? JSON.parse(purchase.representation_data)
+        : undefined,
+      paymentData: purchase.payment_data
+        ? JSON.parse(purchase.payment_data)
+        : undefined,
+      selectedServices: purchase.selected_services || [],
+      totalAmount: purchase.total_amount
+        ? parseFloat(purchase.total_amount.toString())
+        : undefined,
+      createdAt: purchase.created_at,
+      updatedAt: purchase.updated_at,
+    };
+  }
+
   // Create a new purchase request
   static async createPurchaseRequest(
     propertyId: string,
     userId: string
   ): Promise<PurchaseRequest> {
-    const purchaseRequest: PurchaseRequest = {
-      id: `purchase-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      propertyId,
-      userId,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    const response = await this.fetchWithAuth(
+      `${this.getBaseUrl()}/api/purchases`,
+      {
+        method: "POST",
+        body: JSON.stringify({ propertyId }),
+      }
+    );
 
-    // In a real app, this would save to backend
-    // For now, we'll store in localStorage
-    const existingPurchases = this.getStoredPurchases();
-    existingPurchases.push(purchaseRequest);
-    this.savePurchasesToStorage(existingPurchases);
-
-    console.log("Created purchase request:", purchaseRequest);
-    return purchaseRequest;
+    return this.normalizePurchaseRequest(response.purchase);
   }
 
   // Submit representation form
@@ -132,23 +178,18 @@ export class PurchaseService {
     purchaseId: string,
     representationData: RepresentationData
   ): Promise<PurchaseRequest> {
-    const purchases = this.getStoredPurchases();
-    const purchaseIndex = purchases.findIndex((p) => p.id === purchaseId);
+    const response = await this.fetchWithAuth(
+      `${this.getBaseUrl()}/api/purchases/${purchaseId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          representationData,
+          status: "representation_signed",
+        }),
+      }
+    );
 
-    if (purchaseIndex === -1) {
-      throw new Error("Purchase request not found");
-    }
-
-    purchases[purchaseIndex].representationData = representationData;
-    purchases[purchaseIndex].status = "representation_signed";
-    purchases[purchaseIndex].updatedAt = new Date().toISOString();
-
-    this.savePurchasesToStorage(purchases);
-
-    // In a real app, this would integrate with eSignature service
-    console.log("Representation form submitted:", representationData);
-
-    return purchases[purchaseIndex];
+    return this.normalizePurchaseRequest(response.purchase);
   }
 
   // Process payment
@@ -157,13 +198,6 @@ export class PurchaseService {
     selectedServices: string[],
     paymentMethod: string
   ): Promise<PurchaseRequest> {
-    const purchases = this.getStoredPurchases();
-    const purchaseIndex = purchases.findIndex((p) => p.id === purchaseId);
-
-    if (purchaseIndex === -1) {
-      throw new Error("Purchase request not found");
-    }
-
     // Calculate costs
     const serviceCosts: { [key: string]: number } = {};
     let totalServiceCost = 0;
@@ -192,36 +226,60 @@ export class PurchaseService {
       status: "completed", // In real app, this would be determined by payment processor
     };
 
-    purchases[purchaseIndex].paymentData = paymentData;
-    purchases[purchaseIndex].selectedServices = selectedServices;
-    purchases[purchaseIndex].totalAmount = totalAmount;
-    purchases[purchaseIndex].status = "payment_completed";
-    purchases[purchaseIndex].updatedAt = new Date().toISOString();
+    const response = await this.fetchWithAuth(
+      `${this.getBaseUrl()}/api/purchases/${purchaseId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          paymentData,
+          selectedServices,
+          totalAmount,
+          status: "payment_completed",
+        }),
+      }
+    );
 
-    this.savePurchasesToStorage(purchases);
-
-    // In a real app, this would integrate with payment processor (Stripe, PayPal, etc.)
-    console.log("Payment processed:", paymentData);
-
-    return purchases[purchaseIndex];
+    return this.normalizePurchaseRequest(response.purchase);
   }
 
   // Get purchase request by ID
-  static getPurchaseRequest(purchaseId: string): PurchaseRequest | null {
-    const purchases = this.getStoredPurchases();
-    return purchases.find((p) => p.id === purchaseId) || null;
+  static async getPurchaseRequest(
+    purchaseId: string
+  ): Promise<PurchaseRequest | null> {
+    try {
+      const response = await this.fetchWithAuth(
+        `${this.getBaseUrl()}/api/purchases/${purchaseId}`
+      );
+      return this.normalizePurchaseRequest(response.purchase);
+    } catch (error) {
+      console.error("Error fetching purchase:", error);
+      return null;
+    }
   }
 
   // Get all purchases for a user
-  static getUserPurchases(userId: string): PurchaseRequest[] {
-    const purchases = this.getStoredPurchases();
-    return purchases.filter((p) => p.userId === userId);
+  static async getUserPurchases(userId: string): Promise<PurchaseRequest[]> {
+    try {
+      const response = await this.fetchWithAuth(
+        `${this.getBaseUrl()}/api/purchases`
+      );
+      return (response.purchases || []).map((p: any) =>
+        this.normalizePurchaseRequest(p)
+      );
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+      return [];
+    }
   }
 
-  // Get all purchases for a property
-  static getPropertyPurchases(propertyId: string): PurchaseRequest[] {
-    const purchases = this.getStoredPurchases();
-    return purchases.filter((p) => p.propertyId === propertyId);
+  // Get all purchases for a property (filtered from user purchases)
+  static async getPropertyPurchases(
+    propertyId: string
+  ): Promise<PurchaseRequest[]> {
+    const purchases = await this.getUserPurchases("");
+    return purchases.filter(
+      (p) => p.propertyId === propertyId || p.property_id === propertyId
+    );
   }
 
   // Update purchase status
@@ -229,21 +287,15 @@ export class PurchaseService {
     purchaseId: string,
     status: PurchaseRequest["status"]
   ): Promise<PurchaseRequest> {
-    const purchases = this.getStoredPurchases();
-    const purchaseIndex = purchases.findIndex((p) => p.id === purchaseId);
+    const response = await this.fetchWithAuth(
+      `${this.getBaseUrl()}/api/purchases/${purchaseId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ status }),
+      }
+    );
 
-    if (purchaseIndex === -1) {
-      throw new Error("Purchase request not found");
-    }
-
-    purchases[purchaseIndex].status = status;
-    purchases[purchaseIndex].updatedAt = new Date().toISOString();
-
-    this.savePurchasesToStorage(purchases);
-
-    console.log("Purchase status updated:", { purchaseId, status });
-
-    return purchases[purchaseIndex];
+    return this.normalizePurchaseRequest(response.purchase);
   }
 
   // Cancel purchase
@@ -274,13 +326,13 @@ export class PurchaseService {
   }
 
   // Get purchase statistics
-  static getPurchaseStats(): {
+  static async getPurchaseStats(): Promise<{
     totalPurchases: number;
     completedPurchases: number;
     pendingPurchases: number;
     totalRevenue: number;
-  } {
-    const purchases = this.getStoredPurchases();
+  }> {
+    const purchases = await this.getUserPurchases("");
 
     return {
       totalPurchases: purchases.length,
@@ -293,27 +345,8 @@ export class PurchaseService {
       ).length,
       totalRevenue: purchases
         .filter((p) => p.status === "completed")
-        .reduce((sum, p) => sum + (p.totalAmount || 0), 0),
+        .reduce((sum, p) => sum + (p.totalAmount || p.total_amount || 0), 0),
     };
-  }
-
-  // Private helper methods
-  private static getStoredPurchases(): PurchaseRequest[] {
-    try {
-      const stored = localStorage.getItem(this.storageKey);
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error("Error loading purchases from storage:", error);
-      return [];
-    }
-  }
-
-  private static savePurchasesToStorage(purchases: PurchaseRequest[]): void {
-    try {
-      localStorage.setItem(this.storageKey, JSON.stringify(purchases));
-    } catch (error) {
-      console.error("Error saving purchases to storage:", error);
-    }
   }
 
   // Integration with external services (for future implementation)

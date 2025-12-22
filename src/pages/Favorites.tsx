@@ -2,24 +2,84 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Property } from "@/data/properties";
-import { Home, Trash2, ArrowLeft, Heart } from "lucide-react";
+import { Home, Trash2, ArrowLeft, Heart, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { favoritesService } from "@/services/favoritesService";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Favorites() {
   const [likedHouses, setLikedHouses] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
-  // Load liked houses from localStorage
+  // Load liked houses from API
   useEffect(() => {
-    const houses = JSON.parse(localStorage.getItem("likedHouses") || "[]");
-    setLikedHouses(houses);
-  }, []);
+    if (!isAuthenticated) {
+      navigate("/");
+      return;
+    }
+
+    const loadFavorites = async () => {
+      try {
+        setLoading(true);
+        const favorites = await favoritesService.getFavorites();
+        // Extract property data from favorites
+        const properties = favorites
+          .map((fav: any) => {
+            if (fav.property_data && typeof fav.property_data === "object") {
+              return fav.property_data;
+            }
+            // Fallback if property_data is a string
+            try {
+              return typeof fav.property_data === "string"
+                ? JSON.parse(fav.property_data)
+                : null;
+            } catch {
+              return null;
+            }
+          })
+          .filter((p: Property | null) => p !== null);
+        setLikedHouses(properties);
+      } catch (error) {
+        console.error("Error loading favorites:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load favorites",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFavorites();
+  }, [isAuthenticated, navigate]);
 
   // Listen for changes to liked houses
   useEffect(() => {
-    const handleLikedHousesChanged = () => {
-      const houses = JSON.parse(localStorage.getItem("likedHouses") || "[]");
-      setLikedHouses(houses);
+    const handleLikedHousesChanged = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const favorites = await favoritesService.getFavorites();
+        const properties = favorites
+          .map((fav: any) => {
+            if (fav.property_data && typeof fav.property_data === "object") {
+              return fav.property_data;
+            }
+            try {
+              return typeof fav.property_data === "string"
+                ? JSON.parse(fav.property_data)
+                : null;
+            } catch {
+              return null;
+            }
+          })
+          .filter((p: Property | null) => p !== null);
+        setLikedHouses(properties);
+      } catch (error) {
+        console.error("Error refreshing favorites:", error);
+      }
     };
 
     window.addEventListener("likedHousesChanged", handleLikedHousesChanged);
@@ -29,33 +89,46 @@ export default function Favorites() {
         handleLikedHousesChanged
       );
     };
-  }, []);
+  }, [isAuthenticated]);
 
-  const removeHouse = (houseId: string) => {
-    const updatedHouses = likedHouses.filter((house) => house.id !== houseId);
-    localStorage.setItem("likedHouses", JSON.stringify(updatedHouses));
-    setLikedHouses(updatedHouses);
-
-    // Dispatch custom event to update cart count
-    window.dispatchEvent(new CustomEvent("likedHousesChanged"));
-
-    toast({
-      title: "House removed",
-      description: "House removed from your favorites",
-    });
+  const removeHouse = async (houseId: string) => {
+    try {
+      await favoritesService.removeFavorite(houseId);
+      setLikedHouses(likedHouses.filter((house) => house.id !== houseId));
+      window.dispatchEvent(new CustomEvent("likedHousesChanged"));
+      toast({
+        title: "House removed",
+        description: "House removed from your favorites",
+      });
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+      toast({
+        title: "Error",
+        description: "Failed to remove favorite",
+        variant: "destructive",
+      });
+    }
   };
 
-  const clearAll = () => {
-    localStorage.removeItem("likedHouses");
-    setLikedHouses([]);
-
-    // Dispatch custom event to update cart count
-    window.dispatchEvent(new CustomEvent("likedHousesChanged"));
-
-    toast({
-      title: "All favorites cleared",
-      description: "All houses have been removed from your favorites",
-    });
+  const clearAll = async () => {
+    try {
+      for (const house of likedHouses) {
+        await favoritesService.removeFavorite(house.id);
+      }
+      setLikedHouses([]);
+      window.dispatchEvent(new CustomEvent("likedHousesChanged"));
+      toast({
+        title: "All favorites cleared",
+        description: "All houses have been removed from your favorites",
+      });
+    } catch (error) {
+      console.error("Error clearing favorites:", error);
+      toast({
+        title: "Error",
+        description: "Failed to clear favorites",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -109,7 +182,9 @@ export default function Favorites() {
             My Favorite Houses
           </h1>
           <p className="text-gray-600">
-            {likedHouses.length === 0
+            {loading
+              ? "Loading favorites..."
+              : likedHouses.length === 0
               ? "You haven't liked any houses yet."
               : `You have ${likedHouses.length} favorite house${
                   likedHouses.length !== 1 ? "s" : ""
@@ -117,8 +192,12 @@ export default function Favorites() {
           </p>
         </div>
 
-        {/* Favorites List */}
-        {likedHouses.length === 0 ? (
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        ) : likedHouses.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-gray-400 mb-4">
               <Heart size={64} className="mx-auto" />
