@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut, User, Heart, Loader2 } from "lucide-react";
+import { LogOut, User, Loader2 } from "lucide-react";
 
 export default function SignInButton() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
@@ -70,12 +70,6 @@ export default function SignInButton() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => navigate("/favorites")}
-          >
-            <Heart className="mr-2 h-4 w-4" />
-            <span>Liked Houses</span>
-          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => navigate("/dashboard")}
           >

@@ -7,6 +7,7 @@ import {
   useContext,
 } from "react";
 import { authService, User, AuthResponse } from "@/services/authService";
+import { favoritesService } from "@/services/favoritesService";
 
 interface AuthContextType {
   user: User | null;
@@ -34,6 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.user) {
         setUser(response.user);
+        // Migrate localStorage favorites to database when user signs in
+        try {
+          await favoritesService.migrateLocalStorageToDatabase();
+        } catch (err) {
+          console.error("Error migrating favorites:", err);
+          // Don't fail auth if migration fails
+        }
       } else {
         setUser(null);
       }
@@ -56,6 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (result.success) {
         setUser(null);
         setError(null);
+        // Clear localStorage favorites on logout (optional - you might want to keep them)
+        // localStorageFavoritesService.clear();
       } else {
         setError(result.message);
       }
@@ -77,8 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       newUrl.searchParams.delete("auth");
       window.history.replaceState({}, "", newUrl.toString());
 
-      // Immediately check authentication after OAuth redirect
-      checkAuth();
+      // Add a small delay to ensure cookies are processed after redirect
+      // This helps with cross-origin cookie handling
+      setTimeout(() => {
+        checkAuth();
+      }, 100);
     } else {
       // Normal auth check on mount
       checkAuth();

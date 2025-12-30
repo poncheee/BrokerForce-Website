@@ -44,6 +44,7 @@ const corsOptions = {
       "http://localhost:5173",
       "http://localhost:3000",
       "https://rebrokerforceai.netlify.app", // Explicitly allow Netlify frontend
+      "https://brokerforce.netlify.app", // Current Netlify frontend
     ]
       .filter(Boolean) // Remove undefined values
       .map(normalizeUrl); // Normalize all URLs
