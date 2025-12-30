@@ -99,6 +99,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Session configuration
+// Determine if we're in production (for cookie settings)
+// Check NODE_ENV first, then fall back to checking if URLs are HTTPS
+const isProduction = 
+  process.env.NODE_ENV === "production" ||
+  (process.env.BASE_URL && process.env.BASE_URL.startsWith("https://")) ||
+  (process.env.FRONTEND_URL && process.env.FRONTEND_URL.startsWith("https://"));
+
+console.log("Session configuration:", {
+  NODE_ENV: process.env.NODE_ENV,
+  BASE_URL: process.env.BASE_URL,
+  FRONTEND_URL: process.env.FRONTEND_URL,
+  isProduction: isProduction,
+  cookieSecure: isProduction,
+  cookieSameSite: isProduction ? "none" : "lax"
+});
+
 app.use(
   session({
     secret:
@@ -108,13 +124,6 @@ app.use(
     cookie: {
       // For cross-origin cookies (Railway backend -> Netlify frontend):
       // - secure MUST be true when using sameSite: "none"
-      // - Check if we're in production by looking at BASE_URL or FRONTEND_URL
-      //   (not just NODE_ENV, as it might not be set on Railway)
-      const isProduction = 
-        process.env.NODE_ENV === "production" ||
-        (process.env.BASE_URL && process.env.BASE_URL.startsWith("https://")) ||
-        (process.env.FRONTEND_URL && process.env.FRONTEND_URL.startsWith("https://"));
-      
       secure: isProduction,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
