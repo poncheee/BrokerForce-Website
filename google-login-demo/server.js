@@ -106,13 +106,21 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      // In production, secure must be true when using sameSite: "none"
-      secure: process.env.NODE_ENV === "production" ? true : false,
+      // For cross-origin cookies (Railway backend -> Netlify frontend):
+      // - secure MUST be true when using sameSite: "none"
+      // - Check if we're in production by looking at BASE_URL or FRONTEND_URL
+      //   (not just NODE_ENV, as it might not be set on Railway)
+      const isProduction = 
+        process.env.NODE_ENV === "production" ||
+        (process.env.BASE_URL && process.env.BASE_URL.startsWith("https://")) ||
+        (process.env.FRONTEND_URL && process.env.FRONTEND_URL.startsWith("https://"));
+      
+      secure: isProduction,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      // In production, use "none" with secure: true for cross-origin
-      // In development, use "lax" for localhost (browsers allow this for localhost)
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      // Use "none" for cross-origin cookies in production
+      // Use "lax" for localhost development
+      sameSite: isProduction ? "none" : "lax",
       // Don't set domain - let browser handle it for cross-origin cookies
     },
   })

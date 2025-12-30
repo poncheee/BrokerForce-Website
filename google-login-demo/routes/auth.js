@@ -19,7 +19,11 @@ router.get(
     }?auth=error`,
   }),
   (req, res) => {
-    // Successful authentication, save session before redirect
+    // Successful authentication
+    console.log("OAuth callback successful, user:", req.user?.email);
+    console.log("Session ID:", req.sessionID);
+    
+    // Save session before redirect
     req.session.save((err) => {
       if (err) {
         console.error("Session save error:", err);
@@ -27,6 +31,7 @@ router.get(
           `${process.env.FRONTEND_URL || "http://localhost:5173"}?auth=error`
         );
       }
+      console.log("Session saved successfully, redirecting to frontend");
       // Redirect to frontend after session is saved
       const redirectUrl = `${
         process.env.FRONTEND_URL || "http://localhost:5173"

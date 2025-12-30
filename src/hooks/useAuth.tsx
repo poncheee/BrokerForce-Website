@@ -101,18 +101,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const attemptAuthCheck = async () => {
         retryCount++;
         console.log(`Auth check attempt ${retryCount}/${maxRetries}`);
-        
+
         try {
           // Call authService directly to get the response
           const response: AuthResponse = await authService.checkAuth();
-          
+
           if (response.user) {
             // Success! User is authenticated - use checkAuth to update state properly
             console.log("User found, updating state...");
             await checkAuth(); // This will handle state updates and favorites migration
             return; // Stop retrying
           }
-          
+
           // No user yet, retry if we haven't exceeded max retries
           console.log(`No user found, will retry... (attempt ${retryCount}/${maxRetries})`);
           if (retryCount < maxRetries) {
