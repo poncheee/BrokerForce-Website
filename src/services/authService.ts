@@ -173,7 +173,7 @@ class AuthService {
       });
 
       const result = await response.json();
-      
+
       console.log("Registration response:", { ok: response.ok, status: response.status, result });
 
       if (!response.ok) {

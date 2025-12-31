@@ -221,7 +221,7 @@ router.post("/register", async (req, res) => {
       detail: error.detail,
       constraint: error.constraint,
     });
-    
+
     // Provide more specific error messages
     let errorMessage = "Registration failed";
     if (error.code === '23505') { // Unique constraint violation
@@ -237,7 +237,7 @@ router.post("/register", async (req, res) => {
     } else if (error.message) {
       errorMessage = error.message;
     }
-    
+
     res.status(500).json({ error: errorMessage });
   }
 });

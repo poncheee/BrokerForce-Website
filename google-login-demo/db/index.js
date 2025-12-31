@@ -87,6 +87,23 @@ const initializeSchema = async () => {
     await pool.query(schema);
 
     console.log("✅ Database schema initialized successfully!");
+    
+    // Run migration to add username/password columns if they don't exist
+    try {
+      const migrationPath = path.join(__dirname, "migrate_add_username_password.sql");
+      const migration = fs.readFileSync(migrationPath, "utf8");
+      await pool.query(migration);
+      console.log("✅ Database migration completed successfully!");
+    } catch (migrationError) {
+      // Migration errors are usually fine (columns might already exist)
+      const migrationMsg = migrationError.message || migrationError.toString();
+      if (migrationMsg.includes("already exists") || migrationMsg.includes("duplicate") || migrationMsg.includes("does not exist")) {
+        console.log("ℹ️  Migration already applied or not needed");
+      } else {
+        console.warn("⚠️  Migration warning (this is usually safe):", migrationMsg);
+      }
+    }
+    
     return true;
   } catch (error) {
     // Check if error is about tables already existing (which is fine)
