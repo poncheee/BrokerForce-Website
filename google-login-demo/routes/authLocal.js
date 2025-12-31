@@ -40,17 +40,26 @@ router.get("/check-username/:username", async (req, res) => {
     const { username } = req.params;
     const validation = validateUsername(username);
     if (!validation.valid) {
-      return res.json({ available: false, error: validation.error });
+      // Return available: true for invalid usernames (let validation handle it during registration)
+      // This prevents showing "username taken" for validation errors
+      return res.json({ available: true, error: validation.error });
     }
 
+    const normalizedUsername = username.toLowerCase();
+    console.log(`Checking username availability for: ${normalizedUsername}`);
+    
     const result = await query("SELECT id FROM users WHERE username = $1", [
-      username.toLowerCase(),
+      normalizedUsername,
     ]);
 
-    res.json({ available: result.rows.length === 0 });
+    const available = result.rows.length === 0;
+    console.log(`Username ${normalizedUsername} is ${available ? 'available' : 'taken'} (found ${result.rows.length} users)`);
+    
+    res.json({ available });
   } catch (error) {
     console.error("Error checking username:", error);
-    res.status(500).json({ error: "Failed to check username availability" });
+    // On error, assume available (let registration handle the actual check)
+    res.json({ available: true, error: "Could not check username availability" });
   }
 });
 
@@ -217,7 +226,7 @@ router.post("/link-google", async (req, res) => {
     // This endpoint should be called after Google OAuth completes
     // The user should already be logged in with username/password
     // We'll get the Google profile from the session or pass it as a parameter
-    
+
     // For now, we'll handle this in the OAuth callback
     // This endpoint can be used if needed for a different flow
     res.json({ error: "Use Google OAuth to link account" });
@@ -228,4 +237,3 @@ router.post("/link-google", async (req, res) => {
 });
 
 module.exports = router;
-

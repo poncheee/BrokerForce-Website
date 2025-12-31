@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT check_username_format CHECK (
     username IS NULL OR (
-      LENGTH(username) >= 3 AND 
-      LENGTH(username) <= 20 AND 
+      LENGTH(username) >= 3 AND
+      LENGTH(username) <= 20 AND
       username ~ '^[a-zA-Z0-9_-]+$'
     )
   )

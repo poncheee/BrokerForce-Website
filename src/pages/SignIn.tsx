@@ -93,7 +93,7 @@ export default function SignIn() {
   // Handle registration
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (registerPassword !== registerConfirmPassword) {
       toast({
@@ -335,10 +335,10 @@ export default function SignIn() {
                       {checkingUsername && (
                         <p className="text-xs text-muted-foreground">Checking availability...</p>
                       )}
-                      {usernameAvailable === false && registerUsername.length >= 3 && (
+                      {usernameAvailable === false && registerUsername.length >= 3 && !checkingUsername && (
                         <p className="text-xs text-red-600">Username is already taken</p>
                       )}
-                      {usernameAvailable === true && (
+                      {usernameAvailable === true && registerUsername.length >= 3 && !checkingUsername && (
                         <p className="text-xs text-green-600">Username is available</p>
                       )}
                       {registerUsername.length > 0 && registerUsername.length < 3 && (
@@ -412,4 +412,3 @@ export default function SignIn() {
     </div>
   );
 }
-

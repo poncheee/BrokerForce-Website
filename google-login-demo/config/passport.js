@@ -21,7 +21,7 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       try {
         const googleEmail = profile.emails[0].value.toLowerCase();
-        
+
         // Check if user already exists with this Google ID
         const existingGoogleUser = await query(
           "SELECT * FROM users WHERE google_id = $1",

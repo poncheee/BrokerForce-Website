@@ -42,4 +42,3 @@ query(migration).then(() => {
 - Existing Google OAuth users will have `username = NULL` and `password_hash = NULL`
 - New username/password users can optionally provide an email
 - Account linking: If a user signs in with Google using the same email as an existing username/password account, the accounts will be automatically linked
-
