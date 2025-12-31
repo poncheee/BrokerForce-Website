@@ -125,11 +125,21 @@ export default function SignIn() {
     setLoading(true);
 
     try {
+      // Validate email is provided
+      if (!registerEmail || registerEmail.trim().length === 0) {
+        toast({
+          title: "Email required",
+          description: "Please enter your email address.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const result = await authService.register({
         username: registerUsername,
         password: registerPassword,
         name: registerName,
-        email: registerEmail || undefined,
+        email: registerEmail,
       });
 
       if (result.success && result.user) {
@@ -349,13 +359,14 @@ export default function SignIn() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-email">Email (Optional)</Label>
+                      <Label htmlFor="register-email">Email</Label>
                       <Input
                         id="register-email"
                         type="email"
                         placeholder="Enter your email"
                         value={registerEmail}
                         onChange={(e) => setRegisterEmail(e.target.value)}
+                        required
                         disabled={loading}
                       />
                     </div>
