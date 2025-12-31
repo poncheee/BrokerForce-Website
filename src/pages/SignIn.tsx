@@ -142,7 +142,7 @@ export default function SignIn() {
       } else {
         toast({
           title: "Registration failed",
-          description: result.error || "Failed to create account",
+          description: result.error || "Failed to create account. Please try again.",
           variant: "destructive",
         });
       }

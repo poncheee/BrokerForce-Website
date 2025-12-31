@@ -47,14 +47,14 @@ router.get("/check-username/:username", async (req, res) => {
 
     const normalizedUsername = username.toLowerCase();
     console.log(`Checking username availability for: ${normalizedUsername}`);
-    
+
     const result = await query("SELECT id FROM users WHERE username = $1", [
       normalizedUsername,
     ]);
 
     const available = result.rows.length === 0;
     console.log(`Username ${normalizedUsername} is ${available ? 'available' : 'taken'} (found ${result.rows.length} users)`);
-    
+
     res.json({ available });
   } catch (error) {
     console.error("Error checking username:", error);
@@ -83,23 +83,88 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Name is required" });
     }
 
+    // Email is now mandatory
+    if (!email || typeof email !== "string" || email.trim().length === 0) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Validate email format (basic validation)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ error: "Please enter a valid email address" });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedUsername = username.toLowerCase();
+
     // Check if username already exists
-    const existingUser = await query(
+    const existingUsername = await query(
       "SELECT id FROM users WHERE username = $1",
-      [username.toLowerCase()]
+      [normalizedUsername]
     );
 
-    if (existingUser.rows.length > 0) {
+    if (existingUsername.rows.length > 0) {
       return res.status(400).json({ error: "Username already taken" });
     }
 
-    // Check if email already exists (if provided)
-    if (email) {
-      const existingEmail = await query("SELECT id FROM users WHERE email = $1", [
-        email.toLowerCase(),
-      ]);
-      if (existingEmail.rows.length > 0) {
-        return res.status(400).json({ error: "Email already registered" });
+    // Check if email already exists
+    const existingEmailUser = await query(
+      "SELECT id, username, password_hash, google_id FROM users WHERE email = $1",
+      [normalizedEmail]
+    );
+
+    if (existingEmailUser.rows.length > 0) {
+      const existingUser = existingEmailUser.rows[0];
+      
+      // If email exists and already has username/password, it's taken
+      if (existingUser.username && existingUser.password_hash) {
+        return res.status(400).json({ error: "Email is already registered. Please sign in instead." });
+      }
+      
+      // If email exists but only has Google account (no username/password), link them
+      if (existingUser.google_id && !existingUser.username) {
+        // Link username/password to existing Google account
+        const passwordHash = await bcrypt.hash(password, 10);
+        
+        const result = await query(
+          `UPDATE users
+           SET username = $1, password_hash = $2, name = $3, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $4
+           RETURNING id, username, name, email, avatar, created_at`,
+          [normalizedUsername, passwordHash, name.trim(), existingUser.id]
+        );
+
+        const user = result.rows[0];
+        
+        // Log in the user
+        req.login(
+          {
+            id: user.id,
+            username: user.username,
+            name: user.name,
+            email: user.email,
+            avatar: user.avatar,
+            googleId: existingUser.google_id,
+            createdAt: user.created_at,
+          },
+          (err) => {
+            if (err) {
+              console.error("Login error after linking:", err);
+              return res.status(500).json({ error: "Account linked but login failed" });
+            }
+            res.json({
+              success: true,
+              user: {
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar,
+              },
+            });
+          }
+        );
+        return; // Early return, already handled
       }
     }
 
