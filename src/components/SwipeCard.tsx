@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import LikeButton from "@/components/LikeButton";
 import { favoritesService } from "@/services/favoritesService";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SwipeCardProps {
   property: Property;
@@ -26,6 +27,7 @@ export default function SwipeCard({
   onSwipeLeft,
   onSwipeRight,
 }: SwipeCardProps) {
+  const { isAuthenticated } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const formatPrice = (price: number) => {
@@ -149,9 +151,13 @@ export default function SwipeCard({
             size="lg"
             className="flex-1 bg-green-600 hover:bg-green-700"
             onClick={async () => {
-              // Add to favorites via API and then swipe right
+              // Add to favorites via API or localStorage and then swipe right
               try {
-                await favoritesService.addFavorite(property.id, property);
+                await favoritesService.addFavorite(
+                  property.id,
+                  property,
+                  isAuthenticated
+                );
                 window.dispatchEvent(new CustomEvent("likedHousesChanged"));
               } catch (error) {
                 console.error("Error adding favorite:", error);

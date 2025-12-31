@@ -28,26 +28,33 @@ export default function LikeButton({
 
   // Check if property is liked on component mount
   useEffect(() => {
-    if (isAuthenticated) {
-      favoritesService
-        .isFavorite(property.id)
-        .then(setIsLiked)
-        .catch(() => setIsLiked(false));
-    }
+    const checkFavorite = async () => {
+      try {
+        const favorited = await favoritesService.isFavorite(
+          property.id,
+          isAuthenticated
+        );
+        setIsLiked(favorited);
+      } catch (error) {
+        console.error("Error checking favorite status:", error);
+        setIsLiked(false);
+      }
+    };
+    checkFavorite();
   }, [property.id, isAuthenticated]);
 
   const toggleLike = async () => {
-    if (!isAuthenticated) {
-      return; // User must be authenticated
-    }
-
     setIsLoading(true);
     try {
       if (isLiked) {
-        await favoritesService.removeFavorite(property.id);
+        await favoritesService.removeFavorite(property.id, isAuthenticated);
         setIsLiked(false);
       } else {
-        await favoritesService.addFavorite(property.id, property);
+        await favoritesService.addFavorite(
+          property.id,
+          property,
+          isAuthenticated
+        );
         setIsLiked(true);
       }
       // Dispatch custom event to update cart count

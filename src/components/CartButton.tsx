@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { favoritesService } from "@/services/favoritesService";
+import { localStorageFavoritesService } from "@/services/localStorageFavorites";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function CartButton() {
@@ -8,18 +9,23 @@ export default function CartButton() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Update liked count from API
+  // Update liked count from API or localStorage
   const updateLikedCount = async () => {
-    if (!isAuthenticated) {
-      setLikedCount(0);
-      return;
-    }
     try {
-      const favorites = await favoritesService.getFavorites();
-      setLikedCount(favorites.length);
+      if (isAuthenticated) {
+        // Use API for authenticated users
+        const favorites = await favoritesService.getFavorites(true);
+        setLikedCount(favorites.length);
+      } else {
+        // Use localStorage for non-authenticated users
+        const count = localStorageFavoritesService.getCount();
+        setLikedCount(count);
+      }
     } catch (error) {
       console.error("Error loading favorites count:", error);
-      setLikedCount(0);
+      // Fallback to localStorage count if API fails
+      const count = localStorageFavoritesService.getCount();
+      setLikedCount(count);
     }
   };
 
@@ -32,11 +38,24 @@ export default function CartButton() {
       updateLikedCount();
     };
 
+    // Listen for localStorage favorites changes
+    const handleLocalStorageChanged = () => {
+      updateLikedCount();
+    };
+
     window.addEventListener("likedHousesChanged", handleLikedHousesChanged);
+    window.addEventListener(
+      "localStorageFavoritesChanged",
+      handleLocalStorageChanged
+    );
     return () => {
       window.removeEventListener(
         "likedHousesChanged",
         handleLikedHousesChanged
+      );
+      window.removeEventListener(
+        "localStorageFavoritesChanged",
+        handleLocalStorageChanged
       );
     };
   }, [isAuthenticated]);

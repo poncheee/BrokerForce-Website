@@ -40,17 +40,31 @@ else
 fi
 
 # Check/Install pnpm
-if ! command -v pnpm &> /dev/null; then
-    echo "📦 Installing pnpm..."
-    npm install -g pnpm@8.10.0
-else
+USE_PNPM=false
+if command -v pnpm &> /dev/null; then
     echo -e "${GREEN}✅ pnpm found: $(pnpm --version)${NC}"
+    USE_PNPM=true
+else
+    echo "📦 Attempting to install pnpm..."
+    # Try global install first, fall back to npm if permission denied
+    if npm install -g pnpm@8.10.0 2>/dev/null; then
+        echo -e "${GREEN}✅ pnpm installed globally${NC}"
+        USE_PNPM=true
+    else
+        echo -e "${YELLOW}⚠️  Global pnpm install failed (permission issue)${NC}"
+        echo -e "${YELLOW}   Using npm instead (works just as well)${NC}"
+        USE_PNPM=false
+    fi
 fi
 echo ""
 
 # Install root dependencies
 echo "📦 Installing frontend dependencies..."
-pnpm install
+if [ "$USE_PNPM" = true ]; then
+    pnpm install
+else
+    npm install
+fi
 echo ""
 
 # Install backend dependencies

@@ -41,7 +41,12 @@ sleep 3
 
 # Start the React frontend
 echo "⚛️  Starting React Frontend..."
-pnpm dev &
+# Use npm if pnpm is not available
+if command -v pnpm &> /dev/null; then
+    pnpm dev &
+else
+    npm run dev &
+fi
 FRONTEND_PID=$!
 
 echo ""

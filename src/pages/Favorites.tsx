@@ -14,17 +14,12 @@ export default function Favorites() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Load liked houses from API
+  // Load liked houses from API or localStorage
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/");
-      return;
-    }
-
     const loadFavorites = async () => {
       try {
         setLoading(true);
-        const favorites = await favoritesService.getFavorites();
+        const favorites = await favoritesService.getFavorites(isAuthenticated);
         // Extract property data from favorites
         const properties = favorites
           .map((fav: any) => {
@@ -55,14 +50,13 @@ export default function Favorites() {
     };
 
     loadFavorites();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
 
   // Listen for changes to liked houses
   useEffect(() => {
     const handleLikedHousesChanged = async () => {
-      if (!isAuthenticated) return;
       try {
-        const favorites = await favoritesService.getFavorites();
+        const favorites = await favoritesService.getFavorites(isAuthenticated);
         const properties = favorites
           .map((fav: any) => {
             if (fav.property_data && typeof fav.property_data === "object") {
@@ -83,18 +77,32 @@ export default function Favorites() {
       }
     };
 
+    const handleLocalStorageChanged = async () => {
+      if (!isAuthenticated) {
+        handleLikedHousesChanged();
+      }
+    };
+
     window.addEventListener("likedHousesChanged", handleLikedHousesChanged);
+    window.addEventListener(
+      "localStorageFavoritesChanged",
+      handleLocalStorageChanged
+    );
     return () => {
       window.removeEventListener(
         "likedHousesChanged",
         handleLikedHousesChanged
+      );
+      window.removeEventListener(
+        "localStorageFavoritesChanged",
+        handleLocalStorageChanged
       );
     };
   }, [isAuthenticated]);
 
   const removeHouse = async (houseId: string) => {
     try {
-      await favoritesService.removeFavorite(houseId);
+      await favoritesService.removeFavorite(houseId, isAuthenticated);
       setLikedHouses(likedHouses.filter((house) => house.id !== houseId));
       window.dispatchEvent(new CustomEvent("likedHousesChanged"));
       toast({
@@ -114,7 +122,7 @@ export default function Favorites() {
   const clearAll = async () => {
     try {
       for (const house of likedHouses) {
-        await favoritesService.removeFavorite(house.id);
+        await favoritesService.removeFavorite(house.id, isAuthenticated);
       }
       setLikedHouses([]);
       window.dispatchEvent(new CustomEvent("likedHousesChanged"));
