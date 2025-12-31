@@ -33,7 +33,8 @@ export interface SessionResponse {
 }
 
 class AuthService {
-  // Use environment variable for production, fallback to localhost for development
+  // Use environment variable for production (Railway backend URL)
+  // Fallback to localhost for development
   private baseUrl =
     import.meta.env.VITE_AUTH_SERVER_URL || "http://localhost:3001";
 
@@ -139,14 +140,21 @@ class AuthService {
   }
 
   // Check if username is available
-  async checkUsername(username: string): Promise<{ available: boolean; error?: string }> {
+  async checkUsername(
+    username: string
+  ): Promise<{ available: boolean; error?: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/auth/check-username/${encodeURIComponent(username)}`, {
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${this.baseUrl}/api/auth/check-username/${encodeURIComponent(
+          username
+        )}`,
+        {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         return { available: false, error: "Failed to check username" };
@@ -161,7 +169,15 @@ class AuthService {
   }
 
   // Register new user with username/password
-  async register(data: RegisterData): Promise<{ success: boolean; user?: User; error?: string; linked?: boolean; message?: string }> {
+  async register(
+    data: RegisterData
+  ): Promise<{
+    success: boolean;
+    user?: User;
+    error?: string;
+    linked?: boolean;
+    message?: string;
+  }> {
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/register`, {
         method: "POST",
@@ -174,32 +190,48 @@ class AuthService {
 
       const result = await response.json();
 
-      console.log("Registration response:", { ok: response.ok, status: response.status, result });
+      console.log("Registration response:", {
+        ok: response.ok,
+        status: response.status,
+        result,
+      });
 
       if (!response.ok) {
-        console.error("Registration failed with status:", response.status, result);
+        console.error(
+          "Registration failed with status:",
+          response.status,
+          result
+        );
         return { success: false, error: result.error || "Registration failed" };
       }
 
       if (!result.user) {
         console.error("Registration response missing user:", result);
-        return { success: false, error: "Registration succeeded but user data is missing" };
+        return {
+          success: false,
+          error: "Registration succeeded but user data is missing",
+        };
       }
 
       return {
         success: true,
         user: result.user,
         linked: result.linked || false,
-        message: result.message
+        message: result.message,
       };
     } catch (error) {
       console.error("Registration failed:", error);
-      return { success: false, error: error instanceof Error ? error.message : "Registration failed" };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Registration failed",
+      };
     }
   }
 
   // Login with username/password
-  async loginWithPassword(data: LoginData): Promise<{ success: boolean; user?: User; error?: string }> {
+  async loginWithPassword(
+    data: LoginData
+  ): Promise<{ success: boolean; user?: User; error?: string }> {
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/login`, {
         method: "POST",
