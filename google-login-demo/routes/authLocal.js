@@ -115,12 +115,12 @@ router.post("/register", async (req, res) => {
 
     if (existingEmailUser.rows.length > 0) {
       const existingUser = existingEmailUser.rows[0];
-      
+
       // If email exists and already has username/password, it's taken
       if (existingUser.username && existingUser.password_hash) {
         return res.status(400).json({ error: "Email is already registered. Please sign in instead." });
       }
-      
+
       // If email exists but only has Google account (no username/password), link them
       if (existingUser.google_id && !existingUser.username) {
         // Link username/password to existing Google account
@@ -128,13 +128,14 @@ router.post("/register", async (req, res) => {
         
         const result = await query(
           `UPDATE users
-           SET username = $1, password_hash = $2, name = $3, updated_at = CURRENT_TIMESTAMP
-           WHERE id = $4
+           SET username = $1, password_hash = $2, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $3
            RETURNING id, username, name, email, avatar, created_at`,
-          [normalizedUsername, passwordHash, name.trim(), existingUser.id]
+          [normalizedUsername, passwordHash, existingUser.id]
         );
 
         const user = result.rows[0];
+        console.log(`Linked username/password to existing Google account for user ${user.id} (email: ${user.email})`);
         
         // Log in the user
         req.login(
@@ -161,6 +162,8 @@ router.post("/register", async (req, res) => {
                 email: user.email,
                 avatar: user.avatar,
               },
+              linked: true, // Flag to indicate account linking occurred
+              message: "Your username and password have been linked to your existing Google account. You can now sign in with either method.",
             });
           }
         );

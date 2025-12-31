@@ -144,10 +144,19 @@ export default function SignIn() {
 
       if (result.success && result.user) {
         await checkAuth(); // Refresh auth state
-        toast({
-          title: "Account created successfully",
-          description: `Welcome, ${result.user.name}!`,
-        });
+        
+        // Show different message if accounts were linked
+        if (result.linked) {
+          toast({
+            title: "Account linked successfully",
+            description: result.message || "Your username and password have been linked to your existing Google account. You can now sign in with either method.",
+          });
+        } else {
+          toast({
+            title: "Account created successfully",
+            description: `Welcome, ${result.user.name}!`,
+          });
+        }
         navigate("/");
       } else {
         toast({

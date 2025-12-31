@@ -161,7 +161,7 @@ class AuthService {
   }
 
   // Register new user with username/password
-  async register(data: RegisterData): Promise<{ success: boolean; user?: User; error?: string }> {
+  async register(data: RegisterData): Promise<{ success: boolean; user?: User; error?: string; linked?: boolean; message?: string }> {
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/register`, {
         method: "POST",
@@ -178,7 +178,12 @@ class AuthService {
         return { success: false, error: result.error || "Registration failed" };
       }
 
-      return { success: true, user: result.user };
+      return { 
+        success: true, 
+        user: result.user,
+        linked: result.linked || false,
+        message: result.message 
+      };
     } catch (error) {
       console.error("Registration failed:", error);
       return { success: false, error: "Registration failed" };
