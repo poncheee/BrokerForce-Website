@@ -105,7 +105,18 @@ class AuthService {
 
   // Initiate Google OAuth login
   initiateGoogleLogin(): void {
-    window.location.href = `${this.baseUrl}/auth/google`;
+    const googleAuthUrl = `${this.baseUrl}/auth/google`;
+    console.log("Initiating Google login, redirecting to:", googleAuthUrl);
+    console.log("Base URL:", this.baseUrl);
+    console.log("Environment variable VITE_AUTH_SERVER_URL:", import.meta.env.VITE_AUTH_SERVER_URL);
+    
+    if (!this.baseUrl || this.baseUrl === "undefined") {
+      console.error("ERROR: baseUrl is undefined or invalid:", this.baseUrl);
+      alert("Configuration error: Authentication server URL is not set. Please contact support.");
+      return;
+    }
+    
+    window.location.href = googleAuthUrl;
   }
 
   // Logout user
