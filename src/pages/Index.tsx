@@ -380,37 +380,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section - Cluely style */}
-      <section className="relative py-20 bg-gray-50 overflow-hidden">
-        {/* Background floating elements */}
-        <div className="absolute top-10 right-20 w-20 h-20 floating-element rounded-full blur-lg"></div>
-        <div className="absolute bottom-10 left-20 w-16 h-16 floating-element-alt rounded-full blur-lg"></div>
-
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
-            <div className="bg-white p-8 rounded-xl shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 tracking-tight">
-                AI-powered insights
-              </h2>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                Our advanced AI analyzes market trends, property values, and
-                neighborhood data to help you make informed decisions about your
-                next home.
-              </p>
-            </div>
-            <div className="bg-white p-8 rounded-xl shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 tracking-tight">
-                Seamless experience
-              </h2>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                From search to closing, we streamline every step of the home
-                buying process with intuitive tools and expert support.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="relative py-20 bg-gray-50 overflow-hidden">
         {/* Background floating elements */}
