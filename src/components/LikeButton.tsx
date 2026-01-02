@@ -36,9 +36,13 @@ export default function LikeButton({
     }
   }, [property.id, isAuthenticated]);
 
-  const toggleLike = async () => {
+  const toggleLike = async (e: React.MouseEvent) => {
+    // Always stop propagation to prevent card click
+    e.stopPropagation();
+    
     if (!isAuthenticated) {
-      return; // User must be authenticated
+      // User must be authenticated - do nothing, just prevent navigation
+      return;
     }
 
     setIsLoading(true);
@@ -61,7 +65,7 @@ export default function LikeButton({
 
   return (
     <button
-      onClick={toggleLike}
+      onClick={(e) => toggleLike(e)}
       className={`${className} transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-full`}
       aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
     >
