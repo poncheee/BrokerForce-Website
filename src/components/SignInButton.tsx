@@ -1,6 +1,5 @@
 // src/components/SignInButton.tsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,7 +16,6 @@ import { LogOut, User, Loader2 } from "lucide-react";
 export default function SignInButton() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -71,7 +69,7 @@ export default function SignInButton() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => navigate("/dashboard")}
+            onClick={() => (window.location.href = "/dashboard")}
           >
             <User className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
@@ -93,7 +91,7 @@ export default function SignInButton() {
   return (
     <Button
       variant="ghost"
-      onClick={() => navigate("/signin")}
+      onClick={login}
       className="text-gray-700 hover:text-blue-600"
     >
       Sign in

@@ -12,12 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Sensitive files with passwords/secrets
-SUPABASE_CONNECTION_STRING.txt
-*.env
-.env.local
-.env.production
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
