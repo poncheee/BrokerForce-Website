@@ -43,14 +43,23 @@ class AuthService {
 
   constructor() {
     // Log the base URL on initialization for debugging
-    console.log("AuthService initialized with baseUrl:", this.baseUrl);
-    console.log("VITE_AUTH_SERVER_URL from env:", import.meta.env.VITE_AUTH_SERVER_URL);
+    console.log("=== AuthService Debug Info ===");
+    console.log("Base URL:", this.baseUrl);
+    console.log("VITE_AUTH_SERVER_URL from import.meta.env:", import.meta.env.VITE_AUTH_SERVER_URL);
+    console.log("All VITE_ env vars:", Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
+    console.log("Current hostname:", typeof window !== "undefined" ? window.location.hostname : "server-side");
+    console.log("import.meta.env.MODE:", import.meta.env.MODE);
+    console.log("import.meta.env.PROD:", import.meta.env.PROD);
+    console.log("==============================");
     
     // Warn if using localhost in production
     if (typeof window !== "undefined" && window.location.hostname !== "localhost" && this.baseUrl.includes("localhost")) {
-      console.error("⚠️ WARNING: Using localhost backend URL in production! VITE_AUTH_SERVER_URL is not set correctly.");
+      console.error("⚠️ CRITICAL ERROR: Using localhost backend URL in production!");
+      console.error("This means VITE_AUTH_SERVER_URL was not embedded in the build.");
       console.error("Current hostname:", window.location.hostname);
-      console.error("Expected production URL but got:", this.baseUrl);
+      console.error("Base URL being used:", this.baseUrl);
+      console.error("VITE_AUTH_SERVER_URL value:", import.meta.env.VITE_AUTH_SERVER_URL);
+      console.error("This is a build-time issue. The environment variable must be available during 'npm run build'");
     }
   }
 
