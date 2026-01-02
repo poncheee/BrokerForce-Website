@@ -5,6 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { authService } from "@/services/authService";
 import Header from "@/components/Header";
@@ -25,9 +35,13 @@ export default function SignIn() {
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
-  const [registerName, setRegisterName] = useState("");
+  const [registerFirstName, setRegisterFirstName] = useState("");
+  const [registerLastName, setRegisterLastName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [showLinkingDialog, setShowLinkingDialog] = useState(false);
+  const [linkingInfo, setLinkingInfo] = useState<{ email: string; name: string } | null>(null);
 
   // Check username availability
   const checkUsernameAvailability = async (username: string) => {
@@ -45,6 +59,37 @@ export default function SignIn() {
       setUsernameAvailable(null);
     } finally {
       setCheckingUsername(false);
+    }
+  };
+
+  // Validate password requirements
+  const validatePasswordRequirements = (password: string): string[] => {
+    const errors: string[] = [];
+    if (password.length < 8) {
+      errors.push("At least 8 characters");
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push("One uppercase letter");
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push("One lowercase letter");
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push("One number");
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      errors.push("One special character");
+    }
+    return errors;
+  };
+
+  // Update password errors when password changes
+  const handlePasswordChange = (password: string) => {
+    setRegisterPassword(password);
+    if (password.length > 0) {
+      setPasswordErrors(validatePasswordRequirements(password));
+    } else {
+      setPasswordErrors([]);
     }
   };
 
@@ -91,10 +136,37 @@ export default function SignIn() {
   };
 
   // Handle registration
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent, linkToGoogle: boolean = false) => {
     e.preventDefault();
 
     // Validation
+    if (!registerFirstName.trim()) {
+      toast({
+        title: "First name required",
+        description: "Please enter your first name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!registerLastName.trim()) {
+      toast({
+        title: "Last name required",
+        description: "Please enter your last name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!registerEmail.trim()) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (registerPassword !== registerConfirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -104,10 +176,11 @@ export default function SignIn() {
       return;
     }
 
-    if (registerPassword.length < 8) {
+    const passwordValidationErrors = validatePasswordRequirements(registerPassword);
+    if (passwordValidationErrors.length > 0) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters.",
+        title: "Password requirements not met",
+        description: `Password must contain: ${passwordValidationErrors.join(", ")}`,
         variant: "destructive",
       });
       return;
@@ -128,15 +201,28 @@ export default function SignIn() {
       const result = await authService.register({
         username: registerUsername,
         password: registerPassword,
-        name: registerName,
-        email: registerEmail || undefined,
+        firstName: registerFirstName.trim(),
+        lastName: registerLastName.trim(),
+        email: registerEmail.trim(),
+        linkToGoogleAccount: linkToGoogle,
       });
+
+      // Check if account linking is needed
+      if (result.needsLinking) {
+        setLinkingInfo({
+          email: result.existingUser?.email || registerEmail,
+          name: result.existingUser?.name || "",
+        });
+        setShowLinkingDialog(true);
+        setLoading(false);
+        return;
+      }
 
       if (result.success && result.user) {
         await checkAuth(); // Refresh auth state
         toast({
-          title: "Account created successfully",
-          description: `Welcome, ${result.user.name}!`,
+          title: result.linked ? "Accounts linked successfully" : "Account created successfully",
+          description: `Welcome, ${result.user.name || `${result.user.firstName} ${result.user.lastName}`}!`,
         });
         navigate("/");
       } else {
@@ -150,6 +236,47 @@ export default function SignIn() {
       console.error("Registration error:", error);
       toast({
         title: "Registration failed",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle account linking confirmation
+  const handleConfirmLinking = async () => {
+    setShowLinkingDialog(false);
+    setLoading(true);
+
+    try {
+      const result = await authService.register({
+        username: registerUsername,
+        password: registerPassword,
+        firstName: registerFirstName.trim(),
+        lastName: registerLastName.trim(),
+        email: registerEmail.trim(),
+        linkToGoogleAccount: true,
+      });
+
+      if (result.success && result.user) {
+        await checkAuth(); // Refresh auth state
+        toast({
+          title: "Accounts linked successfully",
+          description: `Welcome back! Your accounts are now linked. You can sign in with either Google or your username/password.`,
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Account linking failed",
+          description: result.error || "Failed to link accounts",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Account linking error:", error);
+      toast({
+        title: "Account linking failed",
         description: "An error occurred. Please try again.",
         variant: "destructive",
       });
@@ -301,22 +428,37 @@ export default function SignIn() {
                   </div>
 
                   {/* Registration Form */}
-                  <form onSubmit={handleRegister} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-name">Full Name</Label>
-                      <Input
-                        id="register-name"
-                        type="text"
-                        placeholder="Enter your full name"
-                        value={registerName}
-                        onChange={(e) => setRegisterName(e.target.value)}
-                        required
-                        disabled={loading}
-                      />
+                  <form onSubmit={(e) => handleRegister(e, false)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="register-first-name">First Name *</Label>
+                        <Input
+                          id="register-first-name"
+                          type="text"
+                          placeholder="First name"
+                          value={registerFirstName}
+                          onChange={(e) => setRegisterFirstName(e.target.value)}
+                          required
+                          disabled={loading}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="register-last-name">Last Name *</Label>
+                        <Input
+                          id="register-last-name"
+                          type="text"
+                          placeholder="Last name"
+                          value={registerLastName}
+                          onChange={(e) => setRegisterLastName(e.target.value)}
+                          required
+                          disabled={loading}
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-username">Username</Label>
+                      <Label htmlFor="register-username">Username *</Label>
                       <Input
                         id="register-username"
                         type="text"
@@ -349,33 +491,46 @@ export default function SignIn() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-email">Email (Optional)</Label>
+                      <Label htmlFor="register-email">Email *</Label>
                       <Input
                         id="register-email"
                         type="email"
                         placeholder="Enter your email"
                         value={registerEmail}
                         onChange={(e) => setRegisterEmail(e.target.value)}
+                        required
                         disabled={loading}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-password">Password</Label>
+                      <Label htmlFor="register-password">Password *</Label>
                       <Input
                         id="register-password"
                         type="password"
-                        placeholder="At least 8 characters"
+                        placeholder="Enter your password"
                         value={registerPassword}
-                        onChange={(e) => setRegisterPassword(e.target.value)}
+                        onChange={(e) => handlePasswordChange(e.target.value)}
                         required
                         disabled={loading}
-                        minLength={8}
                       />
+                      {registerPassword.length > 0 && passwordErrors.length > 0 && (
+                        <div className="text-xs text-muted-foreground">
+                          <p className="font-medium mb-1">Password must contain:</p>
+                          <ul className="list-disc list-inside space-y-0.5">
+                            {passwordErrors.map((error, index) => (
+                              <li key={index} className="text-red-600">{error}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {registerPassword.length > 0 && passwordErrors.length === 0 && (
+                        <p className="text-xs text-green-600">✓ Password meets all requirements</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="register-confirm-password">Confirm Password</Label>
+                      <Label htmlFor="register-confirm-password">Confirm Password *</Label>
                       <Input
                         id="register-confirm-password"
                         type="password"
@@ -384,15 +539,19 @@ export default function SignIn() {
                         onChange={(e) => setRegisterConfirmPassword(e.target.value)}
                         required
                         disabled={loading}
-                        minLength={8}
                       />
                       {registerConfirmPassword &&
                         registerPassword !== registerConfirmPassword && (
                           <p className="text-xs text-red-600">Passwords don't match</p>
                         )}
+                      {registerConfirmPassword &&
+                        registerPassword === registerConfirmPassword &&
+                        passwordErrors.length === 0 && (
+                          <p className="text-xs text-green-600">✓ Passwords match</p>
+                        )}
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={loading || usernameAvailable === false}>
+                    <Button type="submit" className="w-full" disabled={loading || usernameAvailable === false || passwordErrors.length > 0}>
                       {loading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -409,6 +568,34 @@ export default function SignIn() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Account Linking Confirmation Dialog */}
+      <AlertDialog open={showLinkingDialog} onOpenChange={setShowLinkingDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Link Your Accounts?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This email ({linkingInfo?.email}) is already associated with a Google account ({linkingInfo?.name}).
+              <br /><br />
+              Would you like to link your accounts? After linking, you'll be able to sign in with either:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Your Google account</li>
+                <li>Your username and password</li>
+              </ul>
+              <br />
+              Both methods will access the same account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowLinkingDialog(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmLinking}>
+              Yes, Link Accounts
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

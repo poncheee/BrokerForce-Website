@@ -6,8 +6,10 @@ CREATE TABLE IF NOT EXISTS users (
   google_id VARCHAR(255) UNIQUE,
   username VARCHAR(50) UNIQUE,
   password_hash VARCHAR(255),
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) UNIQUE,
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  name VARCHAR(255), -- Keep for backward compatibility, will be computed from first_name + last_name
+  email VARCHAR(255) UNIQUE NOT NULL,
   avatar TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -909,7 +909,12 @@ export default function SearchResults() {
               <PropertyCard
                 key={property.id}
                 property={property}
-                onClick={() => navigate(`/property/${property.id}`)}
+                onClick={() => {
+                  toast({
+                    title: "Property Details",
+                    description: `Viewing details for ${property.address}`,
+                  });
+                }}
               />
             ))}
           </div>

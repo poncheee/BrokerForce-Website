@@ -23,7 +23,7 @@ router.get(
     console.log("req.user:", req.user ? { id: req.user.id, name: req.user.name, email: req.user.email } : "null");
     console.log("req.sessionID:", req.sessionID);
     console.log("Session exists:", !!req.session);
-    
+
     // Save session before redirecting to ensure cookie is set
     req.session.save((err) => {
       if (err) {
@@ -34,10 +34,10 @@ router.get(
           }?auth=error&message=session_failed`
         );
       }
-      
+
       console.log("Session saved successfully, sessionID:", req.sessionID);
       console.log("User in session:", req.user ? req.user.id : "null");
-      
+
       // Successful authentication, redirect to frontend
       const redirectUrl = `${
         process.env.FRONTEND_URL || "http://localhost:5173"

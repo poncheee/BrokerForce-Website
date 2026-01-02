@@ -1,9 +1,6 @@
 {
   "name": "shadcnui",
   "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -34,10 +34,7 @@ export default function PropertyCard({ property, onClick }: PropertyCardProps) {
           {property.type.charAt(0).toUpperCase() + property.type.slice(1)}
         </Badge>
         {/* Like Button positioned in top-right corner */}
-        <div 
-          className="absolute top-2 right-2"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="absolute top-2 right-2">
           <LikeButton property={property} size="sm" />
         </div>
       </div>

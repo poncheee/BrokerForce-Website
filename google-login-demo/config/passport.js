@@ -38,13 +38,20 @@ passport.use(
 
         if (existingGoogleUser.rows.length > 0) {
           // User already has Google account - update info
+          // Parse display name into first and last name
+          const nameParts = profile.displayName.split(" ");
+          const firstName = nameParts[0] || profile.displayName;
+          const lastName = nameParts.slice(1).join(" ") || "";
+
           const result = await query(
             `UPDATE users
-             SET name = $1, email = $2, avatar = $3, updated_at = CURRENT_TIMESTAMP
-             WHERE google_id = $4
+             SET name = $1, first_name = $2, last_name = $3, email = $4, avatar = $5, updated_at = CURRENT_TIMESTAMP
+             WHERE google_id = $6
              RETURNING *`,
             [
               profile.displayName,
+              firstName,
+              lastName,
               googleEmail,
               profile.photos[0]?.value || null,
               profile.id,
@@ -56,14 +63,21 @@ passport.use(
           // Account linking: User has username/password account with same email
           // Link Google account to existing account
           const existingUser = existingEmailUser.rows[0];
+          // Parse display name into first and last name
+          const nameParts = profile.displayName.split(" ");
+          const firstName = nameParts[0] || profile.displayName;
+          const lastName = nameParts.slice(1).join(" ") || "";
+
           const result = await query(
             `UPDATE users
-             SET google_id = $1, name = $2, avatar = $3, updated_at = CURRENT_TIMESTAMP
-             WHERE id = $4
+             SET google_id = $1, name = COALESCE($2, name), first_name = COALESCE($3, first_name), last_name = COALESCE($4, last_name), avatar = COALESCE($5, avatar), updated_at = CURRENT_TIMESTAMP
+             WHERE id = $6
              RETURNING *`,
             [
               profile.id,
               profile.displayName,
+              firstName,
+              lastName,
               profile.photos[0]?.value || existingUser.avatar,
               existingUser.id,
             ]
@@ -74,14 +88,21 @@ passport.use(
           // Create new user with Google account
           const { v4: uuidv4 } = require("uuid");
           const userId = uuidv4();
+          // Parse display name into first and last name
+          const nameParts = profile.displayName.split(" ");
+          const firstName = nameParts[0] || profile.displayName;
+          const lastName = nameParts.slice(1).join(" ") || "";
+
           const result = await query(
-            `INSERT INTO users (id, google_id, name, email, avatar, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `INSERT INTO users (id, google_id, name, first_name, last_name, email, avatar, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
              RETURNING *`,
             [
               userId,
               profile.id,
               profile.displayName,
+              firstName,
+              lastName,
               googleEmail,
               profile.photos[0]?.value || null,
             ]
@@ -95,7 +116,9 @@ passport.use(
           id: user.id,
           googleId: user.google_id,
           username: user.username,
-          name: user.name,
+          name: user.name || (user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : null),
+          firstName: user.first_name,
+          lastName: user.last_name,
           email: user.email,
           avatar: user.avatar,
           createdAt: user.created_at,
@@ -128,7 +151,9 @@ passport.deserializeUser(async (id, done) => {
       id: user.id,
       googleId: user.google_id,
       username: user.username,
-      name: user.name,
+      name: user.name || (user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : null),
+      firstName: user.first_name,
+      lastName: user.last_name,
       email: user.email,
       avatar: user.avatar,
       createdAt: user.created_at,

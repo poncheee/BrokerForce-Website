@@ -4,6 +4,8 @@ export interface User {
   id: string;
   username?: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   avatar?: string;
   googleId?: string;
@@ -13,8 +15,10 @@ export interface User {
 export interface RegisterData {
   username: string;
   password: string;
-  name: string;
-  email?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  linkToGoogleAccount?: boolean;
 }
 
 export interface LoginData {
@@ -161,7 +165,14 @@ class AuthService {
   }
 
   // Register new user with username/password
-  async register(data: RegisterData): Promise<{ success: boolean; user?: User; error?: string }> {
+  async register(data: RegisterData): Promise<{
+    success: boolean;
+    user?: User;
+    error?: string;
+    needsLinking?: boolean;
+    linked?: boolean;
+    existingUser?: { email: string; name: string };
+  }> {
     try {
       const response = await fetch(`${this.baseUrl}/api/auth/register`, {
         method: "POST",
@@ -174,11 +185,24 @@ class AuthService {
 
       const result = await response.json();
 
+      // Handle account linking response (200 status with needsLinking flag)
+      if (response.status === 200 && result.needsLinking) {
+        return {
+          success: false,
+          needsLinking: true,
+          existingUser: result.existingUser,
+        };
+      }
+
       if (!response.ok) {
         return { success: false, error: result.error || "Registration failed" };
       }
 
-      return { success: true, user: result.user };
+      return {
+        success: true,
+        user: result.user,
+        linked: result.linked || false,
+      };
     } catch (error) {
       console.error("Registration failed:", error);
       return { success: false, error: "Registration failed" };

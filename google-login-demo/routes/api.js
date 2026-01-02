@@ -9,7 +9,7 @@ router.get("/me", async (req, res) => {
   console.log("req.sessionID:", req.sessionID);
   console.log("Cookies:", req.headers.cookie ? "present" : "missing");
   console.log("Session exists:", !!req.session);
-  
+
   if (req.user) {
     try {
       // Get user from database to ensure we have latest data
@@ -23,7 +23,9 @@ router.get("/me", async (req, res) => {
           user: {
             id: user.id,
             username: user.username,
-            name: user.name,
+            name: user.name || (user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : null),
+            firstName: user.first_name,
+            lastName: user.last_name,
             email: user.email,
             avatar: user.avatar,
             googleId: user.google_id,
@@ -62,6 +64,8 @@ router.get("/session", (req, res) => {
           id: req.user.id,
           username: req.user.username,
           name: req.user.name,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
           email: req.user.email,
           avatar: req.user.avatar,
           googleId: req.user.googleId,

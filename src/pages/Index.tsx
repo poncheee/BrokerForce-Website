@@ -121,7 +121,7 @@ export default function LandingPage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative py-12 overflow-hidden">
+      <section className="relative py-20 overflow-hidden">
         {/* Dynamic background gradient */}
         <div className="absolute inset-0 gradient-bg opacity-5"></div>
         <div className="absolute top-20 left-10 w-32 h-32 floating-element rounded-full blur-xl"></div>
@@ -130,9 +130,13 @@ export default function LandingPage() {
         <div className="absolute top-1/3 right-1/3 w-20 h-20 floating-element rounded-full blur-lg"></div>
 
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
             Find your dream home
           </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
+            We make finding your perfect home simple, fast, and enjoyable with
+            AI-powered insights and seamless technology.
+          </p>
 
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-8">
@@ -297,10 +301,7 @@ export default function LandingPage() {
                           className="flex-shrink-0 px-2"
                           style={{ width: slideWidth }}
                         >
-                          <div 
-                            className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-cluely hover:shadow-cluely-lg transition-all duration-200 cursor-pointer"
-                            onClick={() => navigate(`/property/${property.id}`)}
-                          >
+                          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
                             <div className="relative">
                               <img
                                 src={property.image}
@@ -308,10 +309,7 @@ export default function LandingPage() {
                                 className="w-full h-48 object-cover"
                               />
                               {/* Like Button positioned in top-right corner */}
-                              <div 
-                                className="absolute top-3 right-3"
-                                onClick={(e) => e.stopPropagation()}
-                              >
+                              <div className="absolute top-3 right-3">
                                 <LikeButton property={property} size="md" />
                               </div>
                             </div>

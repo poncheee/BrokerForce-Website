@@ -23,13 +23,25 @@ const validateUsername = (username) => {
   return { valid: true };
 };
 
-// Password validation
+// Password validation with full requirements
 const validatePassword = (password) => {
   if (!password || typeof password !== "string") {
     return { valid: false, error: "Password is required" };
   }
   if (password.length < 8) {
     return { valid: false, error: "Password must be at least 8 characters" };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: "Password must contain at least one uppercase letter" };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: "Password must contain at least one lowercase letter" };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: "Password must contain at least one number" };
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { valid: false, error: "Password must contain at least one special character" };
   }
   return { valid: true };
 };
@@ -57,7 +69,7 @@ router.get("/check-username/:username", async (req, res) => {
 // Register new user with username/password
 router.post("/register", async (req, res) => {
   try {
-    const { username, password, name, email } = req.body;
+    const { username, password, firstName, lastName, email, linkToGoogleAccount } = req.body;
 
     // Validate input
     const usernameValidation = validateUsername(username);
@@ -70,71 +82,187 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: passwordValidation.error });
     }
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return res.status(400).json({ error: "Name is required" });
+    if (!firstName || typeof firstName !== "string" || firstName.trim().length === 0) {
+      return res.status(400).json({ error: "First name is required" });
+    }
+
+    if (!lastName || typeof lastName !== "string" || lastName.trim().length === 0) {
+      return res.status(400).json({ error: "Last name is required" });
+    }
+
+    if (!email || typeof email !== "string" || email.trim().length === 0) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
     }
 
     // Check if username already exists
-    const existingUser = await query(
+    const existingUsername = await query(
       "SELECT id FROM users WHERE username = $1",
       [username.toLowerCase()]
     );
 
-    if (existingUser.rows.length > 0) {
+    if (existingUsername.rows.length > 0) {
       return res.status(400).json({ error: "Username already taken" });
     }
 
-    // Check if email already exists (if provided)
-    if (email) {
-      const existingEmail = await query("SELECT id FROM users WHERE email = $1", [
-        email.toLowerCase(),
-      ]);
-      if (existingEmail.rows.length > 0) {
-        return res.status(400).json({ error: "Email already registered" });
-      }
-    }
+    const normalizedEmail = email.toLowerCase().trim();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Create user
-    const userId = uuidv4();
-    const result = await query(
-      `INSERT INTO users (id, username, password_hash, name, email, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-       RETURNING id, username, name, email, avatar, created_at`,
-      [userId, username.toLowerCase(), passwordHash, name.trim(), email ? email.toLowerCase() : null]
+    // Check if email already exists with a Google account
+    const existingGoogleUser = await query(
+      "SELECT id, google_id, name, email FROM users WHERE email = $1 AND google_id IS NOT NULL",
+      [normalizedEmail]
     );
 
-    const user = result.rows[0];
+    if (existingGoogleUser.rows.length > 0) {
+      // User wants to link accounts
+      if (linkToGoogleAccount === true) {
+        const googleUser = existingGoogleUser.rows[0];
 
-    // Log in the user by creating a session
-    req.login(
-      {
-        id: user.id,
-        username: user.username,
-        name: user.name,
-        email: user.email,
-        avatar: null,
-        googleId: null,
-      },
-      (err) => {
-        if (err) {
-          console.error("Login error after registration:", err);
-          return res.status(500).json({ error: "Registration successful but login failed" });
+        // Check if username is already taken by this or another user
+        const usernameCheck = await query(
+          "SELECT id FROM users WHERE username = $1 AND id != $2",
+          [username.toLowerCase(), googleUser.id]
+        );
+
+        if (usernameCheck.rows.length > 0) {
+          return res.status(400).json({ error: "Username already taken" });
         }
-        res.json({
-          success: true,
-          user: {
+
+        // Hash password
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // Link the accounts: add username and password to existing Google account
+        const result = await query(
+          `UPDATE users
+           SET username = $1, password_hash = $2, first_name = $3, last_name = $4, name = $5, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $6
+           RETURNING id, username, first_name, last_name, name, email, avatar, google_id, created_at`,
+          [
+            username.toLowerCase(),
+            passwordHash,
+            firstName.trim(),
+            lastName.trim(),
+            fullName,
+            googleUser.id,
+          ]
+        );
+
+        const user = result.rows[0];
+
+        // Log in the user
+        req.login(
+          {
             id: user.id,
             username: user.username,
             name: user.name,
+            firstName: user.first_name,
+            lastName: user.last_name,
             email: user.email,
-            avatar: null,
+            avatar: user.avatar,
+            googleId: user.google_id,
+          },
+          (err) => {
+            if (err) {
+              console.error("Login error after account linking:", err);
+              return res.status(500).json({ error: "Account linking successful but login failed" });
+            }
+            res.json({
+              success: true,
+              linked: true,
+              user: {
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                email: user.email,
+                avatar: user.avatar,
+                googleId: user.google_id,
+              },
+            });
+          }
+        );
+      } else {
+        // User needs to confirm linking
+        return res.status(200).json({
+          needsLinking: true,
+          message: "This email is already associated with a Google account. Would you like to link your accounts? You'll be able to sign in with either Google or your username/password.",
+          existingUser: {
+            email: existingGoogleUser.rows[0].email,
+            name: existingGoogleUser.rows[0].name,
           },
         });
       }
-    );
+    } else {
+      // Check if email exists without Google account (regular username/password account)
+      const existingEmail = await query(
+        "SELECT id FROM users WHERE email = $1 AND google_id IS NULL",
+        [normalizedEmail]
+      );
+
+      if (existingEmail.rows.length > 0) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      // Create new user
+      const passwordHash = await bcrypt.hash(password, 10);
+      const userId = uuidv4();
+      const result = await query(
+        `INSERT INTO users (id, username, password_hash, first_name, last_name, name, email, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         RETURNING id, username, first_name, last_name, name, email, avatar, created_at`,
+        [
+          userId,
+          username.toLowerCase(),
+          passwordHash,
+          firstName.trim(),
+          lastName.trim(),
+          fullName,
+          normalizedEmail,
+        ]
+      );
+
+      const user = result.rows[0];
+
+      // Log in the user by creating a session
+      req.login(
+        {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          email: user.email,
+          avatar: null,
+          googleId: null,
+        },
+        (err) => {
+          if (err) {
+            console.error("Login error after registration:", err);
+            return res.status(500).json({ error: "Registration successful but login failed" });
+          }
+          res.json({
+            success: true,
+            linked: false,
+            user: {
+              id: user.id,
+              username: user.username,
+              name: user.name,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              email: user.email,
+              avatar: null,
+            },
+          });
+        }
+      );
+    }
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ error: "Registration failed" });
@@ -152,7 +280,7 @@ router.post("/login", async (req, res) => {
 
     // Find user by username
     const result = await query(
-      "SELECT id, username, password_hash, name, email, avatar, google_id FROM users WHERE username = $1",
+      "SELECT id, username, password_hash, first_name, last_name, name, email, avatar, google_id, created_at FROM users WHERE username = $1",
       [username.toLowerCase()]
     );
 
@@ -178,6 +306,8 @@ router.post("/login", async (req, res) => {
         id: user.id,
         username: user.username,
         name: user.name,
+        firstName: user.first_name,
+        lastName: user.last_name,
         email: user.email,
         avatar: user.avatar,
         googleId: user.google_id,
@@ -194,6 +324,8 @@ router.post("/login", async (req, res) => {
             id: user.id,
             username: user.username,
             name: user.name,
+            firstName: user.first_name,
+            lastName: user.last_name,
             email: user.email,
             avatar: user.avatar,
             googleId: user.google_id,
