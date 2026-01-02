@@ -4,11 +4,20 @@
 CREATE TABLE IF NOT EXISTS users (
   id VARCHAR(255) PRIMARY KEY,
   google_id VARCHAR(255) UNIQUE,
+  username VARCHAR(50) UNIQUE,
+  password_hash VARCHAR(255),
   name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE,
   avatar TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT check_username_format CHECK (
+    username IS NULL OR (
+      LENGTH(username) >= 3 AND
+      LENGTH(username) <= 20 AND
+      username ~ '^[a-zA-Z0-9_-]+$'
+    )
+  )
 );
 
 -- User favorites (saved homes)
@@ -88,3 +97,4 @@ CREATE INDEX IF NOT EXISTS idx_offers_status ON offers(status);
 CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_purchase_request_id ON payments(purchase_request_id);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);

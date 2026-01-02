@@ -122,6 +122,7 @@ app.use(passport.session());
 // Routes
 app.use("/auth", require("./routes/auth"));
 app.use("/api", require("./routes/api"));
+app.use("/api/auth", require("./routes/authLocal"));
 app.use("/api/favorites", require("./routes/favorites"));
 app.use("/api/purchases", require("./routes/purchases"));
 app.use("/api/offers", require("./routes/offers"));
