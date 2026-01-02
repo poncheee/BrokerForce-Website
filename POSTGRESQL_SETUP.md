@@ -134,7 +134,7 @@ JWT_EXPIRES_IN=7d
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 SESSION_SECRET=your_session_secret
-FRONTEND_URL=https://rebrokerforceai.netlify.app
+FRONTEND_URL=https://brokerforce.ai
 BASE_URL=https://your-railway-app.railway.app
 NODE_ENV=production
 ```
