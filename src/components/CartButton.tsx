@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Heart } from "lucide-react";
 import { favoritesService } from "@/services/favoritesService";
-import { localStorageFavoritesService } from "@/services/localStorageFavorites";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function CartButton() {
@@ -9,23 +9,18 @@ export default function CartButton() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Update liked count from API or localStorage
+  // Update liked count from API
   const updateLikedCount = async () => {
+    if (!isAuthenticated) {
+      setLikedCount(0);
+      return;
+    }
     try {
-      if (isAuthenticated) {
-        // Use API for authenticated users
-        const favorites = await favoritesService.getFavorites(true);
-        setLikedCount(favorites.length);
-      } else {
-        // Use localStorage for non-authenticated users
-        const count = localStorageFavoritesService.getCount();
-        setLikedCount(count);
-      }
+      const favorites = await favoritesService.getFavorites();
+      setLikedCount(favorites.length);
     } catch (error) {
       console.error("Error loading favorites count:", error);
-      // Fallback to localStorage count if API fails
-      const count = localStorageFavoritesService.getCount();
-      setLikedCount(count);
+      setLikedCount(0);
     }
   };
 
@@ -38,24 +33,11 @@ export default function CartButton() {
       updateLikedCount();
     };
 
-    // Listen for localStorage favorites changes
-    const handleLocalStorageChanged = () => {
-      updateLikedCount();
-    };
-
     window.addEventListener("likedHousesChanged", handleLikedHousesChanged);
-    window.addEventListener(
-      "localStorageFavoritesChanged",
-      handleLocalStorageChanged
-    );
     return () => {
       window.removeEventListener(
         "likedHousesChanged",
         handleLikedHousesChanged
-      );
-      window.removeEventListener(
-        "localStorageFavoritesChanged",
-        handleLocalStorageChanged
       );
     };
   }, [isAuthenticated]);
@@ -67,32 +49,18 @@ export default function CartButton() {
   return (
     <button
       onClick={handleClick}
-      className="relative flex items-center justify-center w-14 h-12 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-      aria-label={`${likedCount} liked houses`}
+      className="flex items-center gap-2 bg-red-500 rounded-lg px-3 py-2 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+      aria-label={likedCount > 0 ? `${likedCount} liked houses` : "Liked houses"}
     >
-      {/* Custom SVG Heart with circular cutout for number */}
-      <svg
-        className="w-8 h-8 text-red-500"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-      >
-        {/* Heart shape */}
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      {/* Heart icon - white for carving effect */}
+      <Heart className="w-5 h-5 text-white fill-white" />
 
-        {/* Circular cutout for number */}
-        <circle cx="12" cy="12" r="4" fill="white" />
-
-        {/* Number text */}
-        <text
-          x="12"
-          y="15"
-          textAnchor="middle"
-          className="text-xs font-semibold fill-red-500"
-          style={{ fontSize: "12px", fontWeight: "bold" }}
-        >
+      {/* Count number - displayed to the right, only if count > 0 */}
+      {likedCount > 0 && (
+        <span className="text-white font-semibold text-sm">
           {likedCount}
-        </text>
-      </svg>
+        </span>
+      )}
     </button>
   );
 }
