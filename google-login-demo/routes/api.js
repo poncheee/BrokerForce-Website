@@ -4,6 +4,12 @@ const { query } = require("../db");
 
 // Get current user
 router.get("/me", async (req, res) => {
+  console.log("=== /api/me Request ===");
+  console.log("req.user:", req.user ? { id: req.user.id, name: req.user.name } : "null");
+  console.log("req.sessionID:", req.sessionID);
+  console.log("Cookies:", req.headers.cookie ? "present" : "missing");
+  console.log("Session exists:", !!req.session);
+  
   if (req.user) {
     try {
       // Get user from database to ensure we have latest data
@@ -12,6 +18,7 @@ router.get("/me", async (req, res) => {
       ]);
       if (result.rows.length > 0) {
         const user = result.rows[0];
+        console.log("User found in database:", user.name);
         res.json({
           user: {
             id: user.id,
@@ -24,6 +31,7 @@ router.get("/me", async (req, res) => {
           },
         });
       } else {
+        console.log("User not found in database for id:", req.user.id);
         res.status(401).json({
           user: null,
           message: "User not found",
@@ -37,6 +45,7 @@ router.get("/me", async (req, res) => {
       });
     }
   } else {
+    console.log("No req.user - not authenticated");
     res.status(401).json({
       user: null,
       message: "Not authenticated",

@@ -91,6 +91,9 @@ const corsOptions = {
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
+// Trust proxy for proper session cookies in production (Railway, etc.)
+app.set("trust proxy", 1);
+
 app.use(cors(corsOptions));
 
 app.use(express.json());
