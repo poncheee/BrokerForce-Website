@@ -297,7 +297,10 @@ export default function LandingPage() {
                           className="flex-shrink-0 px-2"
                           style={{ width: slideWidth }}
                         >
-                          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-cluely hover:shadow-cluely-lg transition-all duration-200">
+                          <div 
+                            className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-cluely hover:shadow-cluely-lg transition-all duration-200 cursor-pointer"
+                            onClick={() => navigate(`/property/${property.id}`)}
+                          >
                             <div className="relative">
                               <img
                                 src={property.image}
@@ -305,7 +308,10 @@ export default function LandingPage() {
                                 className="w-full h-48 object-cover"
                               />
                               {/* Like Button positioned in top-right corner */}
-                              <div className="absolute top-3 right-3">
+                              <div 
+                                className="absolute top-3 right-3"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <LikeButton property={property} size="md" />
                               </div>
                             </div>
