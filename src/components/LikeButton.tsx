@@ -36,7 +36,7 @@ export default function LikeButton({
     }
   }, [property.id, isAuthenticated]);
 
-  const toggleLike = async (e: React.MouseEvent) => {
+  const toggleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
     // Always stop propagation to prevent card click
     e.stopPropagation();
     
