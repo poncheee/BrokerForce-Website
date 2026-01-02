@@ -40,12 +40,15 @@ class AuthService {
   // Check if user is authenticated
   async checkAuth(): Promise<AuthResponse> {
     try {
+      console.log("Checking auth at:", `${this.baseUrl}/api/me`);
       const response = await fetch(`${this.baseUrl}/api/me`, {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
       });
+
+      console.log("Auth check response status:", response.status);
 
       // Check if response is actually JSON (not HTML error page)
       const contentType = response.headers.get("content-type");
@@ -60,10 +63,12 @@ class AuthService {
       }
 
       if (!response.ok) {
+        console.log("Auth check: Not authenticated (response not ok)");
         return { user: null, message: "Not authenticated" };
       }
 
       const data = await response.json();
+      console.log("Auth check: Received user data", data.user ? { id: data.user.id, name: data.user.name, email: data.user.email } : "null");
       return data;
     } catch (error) {
       console.error("Auth check failed:", error);

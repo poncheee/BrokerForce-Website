@@ -18,12 +18,25 @@ router.get(
       process.env.FRONTEND_URL || "http://localhost:5173"
     }?auth=error`,
   }),
-  (req, res) => {
-    // Successful authentication, redirect to frontend
-    const redirectUrl = `${
-      process.env.FRONTEND_URL || "http://localhost:5173"
-    }?auth=success`;
-    res.redirect(redirectUrl);
+  async (req, res) => {
+    // Save session before redirecting to ensure cookie is set
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.redirect(
+          `${
+            process.env.FRONTEND_URL || "http://localhost:5173"
+          }?auth=error&message=session_failed`
+        );
+      }
+
+      // Successful authentication, redirect to frontend
+      const redirectUrl = `${
+        process.env.FRONTEND_URL || "http://localhost:5173"
+      }?auth=success`;
+      console.log("Google OAuth successful, redirecting to:", redirectUrl);
+      res.redirect(redirectUrl);
+    });
   }
 );
 

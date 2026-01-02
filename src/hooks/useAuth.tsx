@@ -67,22 +67,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check authentication on mount and when URL changes
   useEffect(() => {
-    // Check for auth success in URL params first
-    const urlParams = new URLSearchParams(window.location.search);
-    const authStatus = urlParams.get("auth");
+    const checkAuthOnMount = async () => {
+      // Check for auth success in URL params first
+      const urlParams = new URLSearchParams(window.location.search);
+      const authStatus = urlParams.get("auth");
 
-    if (authStatus === "success") {
-      // Remove the auth parameter from URL
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete("auth");
-      window.history.replaceState({}, "", newUrl.toString());
+      if (authStatus === "success") {
+        // Remove the auth parameter from URL
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete("auth");
+        window.history.replaceState({}, "", newUrl.toString());
 
-      // Immediately check authentication after OAuth redirect
-      checkAuth();
-    } else {
-      // Normal auth check on mount
-      checkAuth();
-    }
+        // Wait a bit for session cookie to be set, then check auth
+        // This gives the browser time to process the session cookie from the redirect
+        setTimeout(async () => {
+          await checkAuth();
+          // Retry once more after a short delay to ensure we get the user
+          setTimeout(async () => {
+            const response = await authService.checkAuth();
+            if (response.user) {
+              setUser(response.user);
+            }
+          }, 500);
+        }, 100);
+      } else {
+        // Normal auth check on mount
+        await checkAuth();
+      }
+    };
+
+    checkAuthOnMount();
   }, [checkAuth]);
 
   const value: AuthContextType = {
