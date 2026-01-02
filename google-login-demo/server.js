@@ -94,6 +94,9 @@ const corsOptions = {
 // Trust proxy for proper session cookies in production (Railway, etc.)
 app.set("trust proxy", 1);
 
+// Handle preflight OPTIONS requests explicitly
+app.options("*", cors(corsOptions));
+
 app.use(cors(corsOptions));
 
 app.use(express.json());
