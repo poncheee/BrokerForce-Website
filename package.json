@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "echo 'Building with VITE_AUTH_SERVER_URL='$VITE_AUTH_SERVER_URL && vite build",
     "lint": "eslint --quiet ./src",
     "preview": "vite preview"
   },
