@@ -8,7 +8,7 @@
   # These are environment variable NAMES, not actual secrets
   SECRETS_SCAN_OMIT_KEYS = "NODE_ENV,PORT,BASE_URL,FRONTEND_URL"
   # Vite needs this at BUILD TIME to embed it in the JavaScript bundle
-  VITE_AUTH_SERVER_URL = "https://brokerforce-website-production.up.railway.app"
+  VITE_AUTH_SERVER_URL = "https://brokerforce-website-production-a631.up.railway.app"
 
 # Redirects for SPA
 [[redirects]]
