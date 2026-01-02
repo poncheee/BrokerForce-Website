@@ -41,6 +41,19 @@ class AuthService {
   private baseUrl =
     import.meta.env.VITE_AUTH_SERVER_URL || "http://localhost:3001";
 
+  constructor() {
+    // Log the base URL on initialization for debugging
+    console.log("AuthService initialized with baseUrl:", this.baseUrl);
+    console.log("VITE_AUTH_SERVER_URL from env:", import.meta.env.VITE_AUTH_SERVER_URL);
+    
+    // Warn if using localhost in production
+    if (typeof window !== "undefined" && window.location.hostname !== "localhost" && this.baseUrl.includes("localhost")) {
+      console.error("⚠️ WARNING: Using localhost backend URL in production! VITE_AUTH_SERVER_URL is not set correctly.");
+      console.error("Current hostname:", window.location.hostname);
+      console.error("Expected production URL but got:", this.baseUrl);
+    }
+  }
+
   // Check if user is authenticated
   async checkAuth(): Promise<AuthResponse> {
     try {
@@ -109,13 +122,13 @@ class AuthService {
     console.log("Initiating Google login, redirecting to:", googleAuthUrl);
     console.log("Base URL:", this.baseUrl);
     console.log("Environment variable VITE_AUTH_SERVER_URL:", import.meta.env.VITE_AUTH_SERVER_URL);
-    
+
     if (!this.baseUrl || this.baseUrl === "undefined") {
       console.error("ERROR: baseUrl is undefined or invalid:", this.baseUrl);
       alert("Configuration error: Authentication server URL is not set. Please contact support.");
       return;
     }
-    
+
     window.location.href = googleAuthUrl;
   }
 
