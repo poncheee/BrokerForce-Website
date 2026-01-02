@@ -3,7 +3,7 @@
   command = "node --version && npm install -g pnpm@8.10.0 --force && pnpm install && pnpm build"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "20.11.0"
   # Configure secrets scanning to ignore false positives
   # These are environment variable NAMES, not actual secrets
   SECRETS_SCAN_OMIT_KEYS = "NODE_ENV,PORT,BASE_URL,FRONTEND_URL"
