@@ -7,10 +7,7 @@
   # Configure secrets scanning to ignore false positives
   # These are environment variable NAMES, not actual secrets
   SECRETS_SCAN_OMIT_KEYS = "NODE_ENV,PORT,BASE_URL,FRONTEND_URL"
-
-# Environment variables for production
-# Temporarily hardcoded to fix build issue - verify correct URL in Railway
-[context.production.environment]
+  # Vite needs this at BUILD TIME to embed it in the JavaScript bundle
   VITE_AUTH_SERVER_URL = "https://brokerforce-website-production.up.railway.app"
 
 # Redirects for SPA
