@@ -26,28 +26,22 @@ export default function LikeButton({
     lg: "w-8 h-8",
   };
 
-  // Check if property is liked on component mount
+  // Check if property is liked on component mount (works for both authenticated and unauthenticated)
   useEffect(() => {
-    if (isAuthenticated) {
-      favoritesService
-        .isFavorite(property.id)
-        .then(setIsLiked)
-        .catch(() => setIsLiked(false));
-    }
+    favoritesService
+      .isFavorite(property.id, isAuthenticated)
+      .then(setIsLiked)
+      .catch(() => setIsLiked(false));
   }, [property.id, isAuthenticated]);
 
   const toggleLike = async () => {
-    if (!isAuthenticated) {
-      return; // User must be authenticated
-    }
-
     setIsLoading(true);
     try {
       if (isLiked) {
-        await favoritesService.removeFavorite(property.id);
+        await favoritesService.removeFavorite(property.id, isAuthenticated);
         setIsLiked(false);
       } else {
-        await favoritesService.addFavorite(property.id, property);
+        await favoritesService.addFavorite(property.id, property, isAuthenticated);
         setIsLiked(true);
       }
       // Dispatch custom event to update cart count

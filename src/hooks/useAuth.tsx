@@ -7,6 +7,7 @@ import {
   useContext,
 } from "react";
 import { authService, User, AuthResponse } from "@/services/authService";
+import { favoritesService } from "@/services/favoritesService";
 
 interface AuthContextType {
   user: User | null;
@@ -24,18 +25,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasSyncedFavorites, setHasSyncedFavorites] = useState(false);
 
   const checkAuth = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
+      const wasAuthenticated = !!user;
       const response: AuthResponse = await authService.checkAuth();
 
       if (response.user) {
         setUser(response.user);
+        
+        // If user just signed in (wasn't authenticated before, but now is), sync localStorage favorites
+        if (!wasAuthenticated && response.user && !hasSyncedFavorites) {
+          console.log("User signed in, syncing localStorage favorites to account...");
+          setHasSyncedFavorites(true);
+          favoritesService.syncLocalFavoritesToAPI().catch((err) => {
+            console.error("Error syncing favorites:", err);
+          });
+        }
       } else {
         setUser(null);
+        setHasSyncedFavorites(false); // Reset when user signs out
       }
     } catch (err) {
       console.error("Authentication check failed:", err);
@@ -44,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user, hasSyncedFavorites]);
 
   const login = () => {
     authService.initiateGoogleLogin();
