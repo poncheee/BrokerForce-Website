@@ -33,7 +33,7 @@ const PORT = process.env.PORT || 3001;
 
 // Trust proxy - Required for Railway/production environments
 // This allows Express to correctly detect HTTPS and set secure cookies
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
 // Middleware
 // CORS configuration - allow requests from frontend
@@ -50,10 +50,11 @@ const corsOptions = {
 
     const allowedOrigins = [
       frontendUrl,
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://rebrokerforceai.netlify.app", // Explicitly allow Netlify frontend
-      "https://brokerforce.netlify.app", // Current Netlify frontend
+      "http://localhost:5173", // Development
+      "http://localhost:3000", // Development
+      "https://brokerforce.ai", // Production frontend
+      "https://www.brokerforce.ai", // Production frontend with www
+      "https://brokerforce.netlify.app", // Netlify frontend (if using Netlify subdomain)
     ]
       .filter(Boolean) // Remove undefined values
       .map(normalizeUrl); // Normalize all URLs
@@ -121,7 +122,7 @@ console.log("Session configuration:", {
   FRONTEND_URL: process.env.FRONTEND_URL,
   isProduction: isProduction,
   cookieSecure: isProduction,
-  cookieSameSite: isProduction ? "none" : "lax"
+  cookieSameSite: isProduction ? "none" : "lax",
 });
 
 app.use(
@@ -168,63 +169,29 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Demo page for testing
+// Backend API server - frontend is served separately (Netlify)
+// Show simple info page for root route
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
     <html>
     <head>
-        <title>BrokerForce Google Login Demo</title>
+        <title>BrokerForce API Server</title>
         <style>
             body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
             .container { text-align: center; }
-            .btn { background: #4285f4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 10px; }
-            .btn:hover { background: #3367d6; }
-            .user-info { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; }
-            .error { background: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin: 10px 0; }
+            .info { background: #e3f2fd; color: #1565c0; padding: 20px; border-radius: 8px; margin: 20px 0; }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>🔐 BrokerForce Google Login Demo</h1>
-            <p>This is the authentication server for BrokerForce.</p>
-
-            ${
-              req.user
-                ? `
-                <div class="user-info">
-                    <h3>✅ Signed in as: ${req.user.name}</h3>
-                    <p><strong>Email:</strong> ${req.user.email}</p>
-                    <p><strong>Google ID:</strong> ${req.user.googleId}</p>
-                    <img src="${req.user.avatar}" alt="Profile" style="width: 50px; border-radius: 50%; margin: 10px 0;">
-                    <br>
-                    <a href="/auth/logout" class="btn">Sign Out</a>
-                </div>
-            `
-                : `
-                <a href="/auth/google" class="btn">Sign in with Google</a>
-            `
-            }
-
-            <h3>API Endpoints:</h3>
-            <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
-                <li><a href="/health">/health</a> - Health check</li>
-                <li><a href="/api/me">/api/me</a> - Get current user</li>
-                <li><a href="/api/session">/api/session</a> - Get session status</li>
-                <li><a href="/auth/google">/auth/google</a> - Google OAuth login</li>
-                <li><a href="/auth/logout">/auth/logout</a> - Logout</li>
-            </ul>
-
-            <h3>Environment Info:</h3>
-            <p><strong>Frontend URL:</strong> ${
-              process.env.FRONTEND_URL || "Not set"
-            }</p>
-            <p><strong>Base URL:</strong> ${
-              process.env.BASE_URL || "Not set"
-            }</p>
-            <p><strong>Environment:</strong> ${
-              process.env.NODE_ENV || "development"
-            }</p>
+            <h1>🔐 BrokerForce API Server</h1>
+            <div class="info">
+                <p><strong>Backend API is running</strong></p>
+                <p>Frontend is served separately on Netlify</p>
+                <p>Environment: ${process.env.NODE_ENV || "development"}</p>
+            </div>
+            <p><a href="/health">Health Check</a> | <a href="/api/me">API Test</a></p>
         </div>
     </body>
     </html>
