@@ -9,14 +9,10 @@ export default function CartButton() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Update liked count from API
+  // Update liked count from API (authenticated) or localStorage (unauthenticated)
   const updateLikedCount = async () => {
-    if (!isAuthenticated) {
-      setLikedCount(0);
-      return;
-    }
     try {
-      const favorites = await favoritesService.getFavorites();
+      const favorites = await favoritesService.getFavorites(isAuthenticated);
       setLikedCount(favorites.length);
     } catch (error) {
       console.error("Error loading favorites count:", error);
@@ -49,13 +45,10 @@ export default function CartButton() {
   return (
     <button
       onClick={handleClick}
-      className="flex items-center gap-2 bg-red-500 rounded-lg px-3 py-2 hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-      aria-label={likedCount > 0 ? `${likedCount} liked houses` : "Liked houses"}
+      className="relative flex items-center justify-center gap-2 px-3 h-12 bg-red-500 hover:bg-red-600 border border-red-600 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+      aria-label={`${likedCount} liked houses`}
     >
-      {/* Heart icon - white for carving effect */}
-      <Heart className="w-5 h-5 text-white fill-white" />
-
-      {/* Count number - displayed to the right, only if count > 0 */}
+      <Heart className="w-6 h-6 text-white fill-white" />
       {likedCount > 0 && (
         <span className="text-white font-semibold text-sm">
           {likedCount}
