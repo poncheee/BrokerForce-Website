@@ -133,10 +133,6 @@ export default function LandingPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
             Find your dream home
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-12 leading-relaxed">
-            We make finding your perfect home simple, fast, and enjoyable with
-            AI-powered insights and seamless technology.
-          </p>
 
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-8">

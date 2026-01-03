@@ -34,7 +34,8 @@ export default function LikeButton({
       .catch(() => setIsLiked(false));
   }, [property.id, isAuthenticated]);
 
-  const toggleLike = async () => {
+  const toggleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event from bubbling to parent card
     setIsLoading(true);
     try {
       if (isLiked) {

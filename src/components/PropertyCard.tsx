@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Property } from '@/data/properties';
 import { Bed, Bath, Square } from 'lucide-react';
 import LikeButton from '@/components/LikeButton';
+import { useNavigate } from 'react-router-dom';
 
 interface PropertyCardProps {
   property: Property;
@@ -10,6 +11,15 @@ interface PropertyCardProps {
 }
 
 export default function PropertyCard({ property, onClick }: PropertyCardProps) {
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      navigate(`/property/${property.id}`);
+    }
+  };
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -23,7 +33,7 @@ export default function PropertyCard({ property, onClick }: PropertyCardProps) {
   };
 
   return (
-    <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={onClick}>
+    <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={handleCardClick}>
       <div className="relative">
         <img
           src={property.image}
@@ -34,7 +44,7 @@ export default function PropertyCard({ property, onClick }: PropertyCardProps) {
           {property.type.charAt(0).toUpperCase() + property.type.slice(1)}
         </Badge>
         {/* Like Button positioned in top-right corner */}
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
           <LikeButton property={property} size="sm" />
         </div>
       </div>
