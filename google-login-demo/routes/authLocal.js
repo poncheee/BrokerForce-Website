@@ -126,7 +126,7 @@ router.post("/register", async (req, res) => {
 
     // Check if email already exists with a Google account
     const existingGoogleUser = await query(
-      "SELECT id, google_id, name, email, first_name, last_name FROM users WHERE email = $1 AND google_id IS NOT NULL",
+      "SELECT id, google_id, name, email, first_name, last_name, username, password_hash FROM users WHERE email = $1 AND google_id IS NOT NULL",
       [normalizedEmail]
     );
 
