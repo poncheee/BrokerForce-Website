@@ -62,6 +62,7 @@ passport.use(
         } else if (existingEmailUser.rows.length > 0) {
           // Account linking: User has username/password account with same email
           // Link Google account to existing account
+          // Google's first_name and last_name take precedence (always use Google names)
           const existingUser = existingEmailUser.rows[0];
           // Parse display name into first and last name
           const nameParts = profile.displayName.split(" ");
@@ -70,7 +71,7 @@ passport.use(
 
           const result = await query(
             `UPDATE users
-             SET google_id = $1, name = COALESCE($2, name), first_name = COALESCE($3, first_name), last_name = COALESCE($4, last_name), avatar = COALESCE($5, avatar), updated_at = CURRENT_TIMESTAMP
+             SET google_id = $1, name = $2, first_name = $3, last_name = $4, avatar = COALESCE($5, avatar), updated_at = CURRENT_TIMESTAMP
              WHERE id = $6
              RETURNING *`,
             [

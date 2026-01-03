@@ -126,7 +126,7 @@ router.post("/register", async (req, res) => {
 
     // Check if email already exists with a Google account
     const existingGoogleUser = await query(
-      "SELECT id, google_id, name, email FROM users WHERE email = $1 AND google_id IS NOT NULL",
+      "SELECT id, google_id, name, email, first_name, last_name FROM users WHERE email = $1 AND google_id IS NOT NULL",
       [normalizedEmail]
     );
 
@@ -149,6 +149,12 @@ router.post("/register", async (req, res) => {
         const passwordHash = await bcrypt.hash(password, 10);
 
         // Link the accounts: add username and password to existing Google account
+        // Use Google's first_name and last_name (Google takes precedence)
+        // If Google doesn't have first/last name, use the form input as fallback
+        const googleFirstName = googleUser.first_name || firstName.trim();
+        const googleLastName = googleUser.last_name || lastName.trim();
+        const googleFullName = googleUser.name || fullName;
+
         const result = await query(
           `UPDATE users
            SET username = $1, password_hash = $2, first_name = $3, last_name = $4, name = $5, updated_at = CURRENT_TIMESTAMP
@@ -157,9 +163,9 @@ router.post("/register", async (req, res) => {
           [
             username.toLowerCase(),
             passwordHash,
-            firstName.trim(),
-            lastName.trim(),
-            fullName,
+            googleFirstName,
+            googleLastName,
+            googleFullName,
             googleUser.id,
           ]
         );
