@@ -577,7 +577,9 @@ export default function SignIn() {
             <AlertDialogDescription>
               This email ({linkingInfo?.email}) is already associated with a Google account ({linkingInfo?.name}).
               <br /><br />
-              Would you like to link your accounts? After linking, you'll be able to sign in with either:
+              Would you like to link your accounts? We'll add your username <strong>"{registerUsername}"</strong> and password to that account.
+              <br /><br />
+              After linking, you'll be able to sign in with either:
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>Your Google account</li>
                 <li>Your username and password</li>

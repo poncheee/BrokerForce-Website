@@ -47,17 +47,28 @@ const validatePassword = (password) => {
 };
 
 // Check if username is available
+// Query params: ?excludeUserId=<user_id> to exclude a specific user (for editing)
 router.get("/check-username/:username", async (req, res) => {
   try {
     const { username } = req.params;
+    const excludeUserId = req.query.excludeUserId;
+
     const validation = validateUsername(username);
     if (!validation.valid) {
       return res.json({ available: false, error: validation.error });
     }
 
-    const result = await query("SELECT id FROM users WHERE username = $1", [
-      username.toLowerCase(),
-    ]);
+    // Check if username is taken by another user
+    // Exclude NULL/empty usernames and optionally exclude a specific user ID
+    let queryText = "SELECT id FROM users WHERE username = $1 AND username IS NOT NULL AND username != ''";
+    const queryParams = [username.toLowerCase()];
+
+    if (excludeUserId) {
+      queryText += " AND id != $2";
+      queryParams.push(excludeUserId);
+    }
+
+    const result = await query(queryText, queryParams);
 
     res.json({ available: result.rows.length === 0 });
   } catch (error) {
@@ -100,9 +111,9 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
-    // Check if username already exists
+    // Check if username already exists (exclude NULL/empty usernames)
     const existingUsername = await query(
-      "SELECT id FROM users WHERE username = $1",
+      "SELECT id FROM users WHERE username = $1 AND username IS NOT NULL AND username != ''",
       [username.toLowerCase()]
     );
 
@@ -124,9 +135,9 @@ router.post("/register", async (req, res) => {
       if (linkToGoogleAccount === true) {
         const googleUser = existingGoogleUser.rows[0];
 
-        // Check if username is already taken by this or another user
+        // Check if username is already taken by another user (exclude NULL/empty usernames and current user)
         const usernameCheck = await query(
-          "SELECT id FROM users WHERE username = $1 AND id != $2",
+          "SELECT id FROM users WHERE username = $1 AND username IS NOT NULL AND username != '' AND id != $2",
           [username.toLowerCase(), googleUser.id]
         );
 
@@ -192,7 +203,7 @@ router.post("/register", async (req, res) => {
         // User needs to confirm linking
         return res.status(200).json({
           needsLinking: true,
-          message: "This email is already associated with a Google account. Would you like to link your accounts? You'll be able to sign in with either Google or your username/password.",
+          message: `This email (${existingGoogleUser.rows[0].email}) is already associated with a Google account. Would you like to link your accounts? We'll add your username "${username}" and password to that account, and you'll be able to sign in with either Google or your username/password.`,
           existingUser: {
             email: existingGoogleUser.rows[0].email,
             name: existingGoogleUser.rows[0].name,
