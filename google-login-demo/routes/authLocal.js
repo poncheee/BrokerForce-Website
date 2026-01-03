@@ -135,6 +135,14 @@ router.post("/register", async (req, res) => {
       if (linkToGoogleAccount === true) {
         const googleUser = existingGoogleUser.rows[0];
 
+        // Check if account already has username and password (all fields filled)
+        // If so, don't allow changes - account is already fully linked
+        if (googleUser.username && googleUser.password_hash) {
+          return res.status(400).json({ 
+            error: "This account already has a username and password. Please sign in with your existing credentials or Google." 
+          });
+        }
+
         // Check if username is already taken by another user (exclude NULL/empty usernames and current user)
         const usernameCheck = await query(
           "SELECT id FROM users WHERE username = $1 AND username IS NOT NULL AND username != '' AND id != $2",
